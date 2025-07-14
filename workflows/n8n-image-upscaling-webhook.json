@@ -1,0 +1,45 @@
+{
+  "name": "Image Upscaling via Agent Run",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "image-upscaling"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.VERCEL_API_URL }}/api/agent-run",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "{\"task\": \"upscale_image\", \"model\": \"realesrgan\", \"image_url\": \"{{$json[\"image_url\"]}}\"}"
+      },
+      "id": "2",
+      "name": "Image Upscaling",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Image Upscaling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["webhook", "upscaling", "monetizable"]
+}

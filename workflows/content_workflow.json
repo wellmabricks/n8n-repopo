@@ -1,0 +1,468 @@
+{
+  "name": "Content Generation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "content-gen",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "content-generation-webhook"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract the request data\nconst data = $input.item.json.data || {};\nconst operation = data.operation || 'scrape';\n\n// Set default output\nlet output = {\n  operation,\n  timestamp: new Date().toISOString(),\n  success: false,\n  error: null,\n  data: null\n};\n\ntry {\n  // Process based on operation type\n  switch(operation) {\n    case 'scrape':\n      output.target = data.url || '';\n      break;\n    case 'process_media':\n      output.target = data.media_url || '';\n      output.format = data.format || 'mp4';\n      break;\n    case 'generate_content':\n      output.platforms = data.platforms || ['twitter', 'facebook'];\n      output.content_type = data.content_type || 'text';\n      break;\n    case 'publish':\n      output.platforms = data.platforms || ['twitter'];\n      output.content_id = data.content_id || '';\n      break;\n    default:\n      throw new Error(`Unknown operation: ${operation}`);\n  }\n  \n  output.success = true;\n  \n} catch (error) {\n  output.error = error.message;\n}\n\nreturn {json: output};"
+      },
+      "name": "Parse Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Parse Request\"].json[\"operation\"]}}",
+              "value2": "scrape"
+            }
+          ]
+        }
+      },
+      "name": "Scrape?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Parse Request\"].json[\"operation\"]}}",
+              "value2": "process_media"
+            }
+          ]
+        }
+      },
+      "name": "Process Media?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Parse Request\"].json[\"operation\"]}}",
+              "value2": "generate_content"
+            }
+          ]
+        }
+      },
+      "name": "Generate Content?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$node[\"Parse Request\"].json[\"operation\"]}}",
+              "value2": "publish"
+            }
+          ]
+        }
+      },
+      "name": "Publish?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/scrape",
+        "sendQuery": false,
+        "sendHeaders": false,
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $node[\"Parse Request\"].json[\"target\"] }}"
+            },
+            {
+              "name": "options",
+              "value": "={}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Call Scraper API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/process_media",
+        "sendQuery": false,
+        "sendHeaders": false,
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_url",
+              "value": "={{ $node[\"Parse Request\"].json[\"target\"] }}"
+            },
+            {
+              "name": "format",
+              "value": "={{ $node[\"Parse Request\"].json[\"format\"] }}"
+            },
+            {
+              "name": "options",
+              "value": "={}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Call Media Processor API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/generate_content",
+        "sendQuery": false,
+        "sendHeaders": false,
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "platforms",
+              "value": "={{ $node[\"Parse Request\"].json[\"platforms\"] }}"
+            },
+            {
+              "name": "content_type",
+              "value": "={{ $node[\"Parse Request\"].json[\"content_type\"] }}"
+            },
+            {
+              "name": "content_id",
+              "value": "={{ $node[\"Parse Request\"].json[\"content_id\"] || \"\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Call Content Generator API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/publish",
+        "sendQuery": false,
+        "sendHeaders": false,
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "platforms",
+              "value": "={{ $node[\"Parse Request\"].json[\"platforms\"] }}"
+            },
+            {
+              "name": "content_id",
+              "value": "={{ $node[\"Parse Request\"].json[\"content_id\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Call Publisher API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        850,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Process Error",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Error Processing Request\nOperation: {{$node[\"Parse Request\"].json[\"operation\"]}}\nError: {{$node[\"Parse Request\"].json[\"error\"]}}",
+        "options": {}
+      },
+      "name": "Error Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        900
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Request": {
+      "main": [
+        [
+          {
+            "node": "Scrape?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape?": {
+      "main": [
+        [
+          {
+            "node": "Call Scraper API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Process Media?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Media?": {
+      "main": [
+        [
+          {
+            "node": "Call Media Processor API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Content?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content?": {
+      "main": [
+        [
+          {
+            "node": "Call Content Generator API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publish?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish?": {
+      "main": [
+        [
+          {
+            "node": "Call Publisher API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Scraper API": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Media Processor API": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Call Content Generator API": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Call Publisher API": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Error": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Error Message": {
+      "main": [
+        [
+          {
+            "node": "Process Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "",
+  "id": "content-generation-workflow",
+  "meta": {
+    "instanceId": "content-generation-workflow-instance"
+  },
+  "tags": [
+    "content",
+    "automation",
+    "scraping"
+  ]
+}

@@ -1,0 +1,28 @@
+# Git files
+.git
+.gitignore
+
+# Docker files
+.dockerignore
+Dockerfile
+
+# Documentation
+README.md
+*.md
+
+# Environment files
+.env
+.env.*
+
+# Backup directories
+n8n_backup_*/
+
+# IDE files
+.vscode/
+.idea/
+
+# Node modules (if any)
+node_modules/
+
+# Log files
+*.log

@@ -1,0 +1,45 @@
+{
+  "name": "Generate Image via Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-image"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.VERCEL_API_URL }}/api/generate-image",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "{\"prompt\": \"{{$json[\"prompt\"]}}\"}"
+      },
+      "id": "2",
+      "name": "Generate Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["webhook", "image", "monetizable"]
+}

@@ -1,0 +1,102 @@
+{
+  "name": "QR Code Generator API",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "qr-code",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the text or URL from the query parameter\nconst text = $input.item.json.query.text || \"https://n8n.io\";\nconst size = $input.item.json.query.size || \"300x300\";\nconst color = $input.item.json.query.color || \"000000\";\nconst bgcolor = $input.item.json.query.bgcolor || \"FFFFFF\";\n\n// Validate input\nif (!text) {\n  return {\n    error: \"Missing 'text' parameter\"\n  };\n}\n\n// Return the data\nreturn {\n  text,\n  size,\n  color,\n  bgcolor,\n  qrCodeUrl: `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(text)}&size=${size}&color=${color}&bgcolor=${bgcolor}`\n};"
+      },
+      "name": "Process Parameters",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.qrCodeUrl }}",
+        "options": {
+          "encoding": "arraybuffer"
+        }
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Parameters": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1",
+  "id": "1",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

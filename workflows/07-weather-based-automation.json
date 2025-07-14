@@ -1,0 +1,425 @@
+{
+  "name": "Weather-Based Automation Triggers",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define locations to monitor\nreturn [\n  {\n    \"name\": \"New York\",\n    \"city\": \"New York\",\n    \"country\": \"US\",\n    \"lat\": 40.7128,\n    \"lon\": -74.0060,\n    \"tags\": [\"east-coast\", \"urban\"]\n  },\n  {\n    \"name\": \"Los Angeles\",\n    \"city\": \"Los Angeles\",\n    \"country\": \"US\",\n    \"lat\": 34.0522,\n    \"lon\": -118.2437,\n    \"tags\": [\"west-coast\", \"urban\"]\n  },\n  {\n    \"name\": \"Chicago\",\n    \"city\": \"Chicago\",\n    \"country\": \"US\",\n    \"lat\": 41.8781,\n    \"lon\": -87.6298,\n    \"tags\": [\"midwest\", \"urban\"]\n  },\n  {\n    \"name\": \"Miami\",\n    \"city\": \"Miami\",\n    \"country\": \"US\",\n    \"lat\": 25.7617,\n    \"lon\": -80.1918,\n    \"tags\": [\"southeast\", \"coastal\"]\n  },\n  {\n    \"name\": \"Denver\",\n    \"city\": \"Denver\",\n    \"country\": \"US\",\n    \"lat\": 39.7392,\n    \"lon\": -104.9903,\n    \"tags\": [\"mountain\", \"high-altitude\"]\n  }\n];"
+      },
+      "name": "Location List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Split Locations",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openweathermap.org/data/2.5/weather?lat={{ $json.lat }}&lon={{ $json.lon }}&appid=YOUR_OPENWEATHERMAP_API_KEY&units=imperial",
+        "options": {}
+      },
+      "name": "Get Current Weather",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.openweathermap.org/data/2.5/forecast?lat={{ $json.lat }}&lon={{ $json.lon }}&appid=YOUR_OPENWEATHERMAP_API_KEY&units=imperial&cnt=8",
+        "options": {}
+      },
+      "name": "Get Weather Forecast",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        910,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Combine location data with current weather and forecast\nconst location = {\n  name: $input.item.json.name,\n  city: $input.item.json.city,\n  country: $input.item.json.country,\n  lat: $input.item.json.lat,\n  lon: $input.item.json.lon,\n  tags: $input.item.json.tags\n};\n\n// Extract current weather data\nconst currentWeather = $input.item.json;\nconst current = {\n  temp: currentWeather.main.temp,\n  feels_like: currentWeather.main.feels_like,\n  temp_min: currentWeather.main.temp_min,\n  temp_max: currentWeather.main.temp_max,\n  pressure: currentWeather.main.pressure,\n  humidity: currentWeather.main.humidity,\n  wind_speed: currentWeather.wind.speed,\n  wind_direction: currentWeather.wind.deg,\n  clouds: currentWeather.clouds.all,\n  visibility: currentWeather.visibility,\n  weather_main: currentWeather.weather[0].main,\n  weather_description: currentWeather.weather[0].description,\n  weather_icon: currentWeather.weather[0].icon,\n  rain_1h: currentWeather.rain ? currentWeather.rain['1h'] : 0,\n  snow_1h: currentWeather.snow ? currentWeather.snow['1h'] : 0,\n  sunrise: currentWeather.sys.sunrise,\n  sunset: currentWeather.sys.sunset,\n  timezone: currentWeather.timezone\n};\n\n// Get forecast data from the other branch\nconst forecastData = $('Get Weather Forecast').item.json;\nconst forecast = forecastData.list.map(item => ({\n  dt: item.dt,\n  temp: item.main.temp,\n  feels_like: item.main.feels_like,\n  weather_main: item.weather[0].main,\n  weather_description: item.weather[0].description,\n  weather_icon: item.weather[0].icon,\n  pop: item.pop, // probability of precipitation\n  wind_speed: item.wind.speed\n}));\n\n// Analyze weather conditions\nconst conditions = {\n  isRaining: current.weather_main.toLowerCase().includes('rain') || current.rain_1h > 0,\n  isSnowing: current.weather_main.toLowerCase().includes('snow') || current.snow_1h > 0,\n  isClear: current.weather_main.toLowerCase().includes('clear'),\n  isCloudy: current.weather_main.toLowerCase().includes('cloud'),\n  isStormy: current.weather_main.toLowerCase().includes('thunderstorm'),\n  isFoggy: current.weather_main.toLowerCase().includes('fog') || current.weather_main.toLowerCase().includes('mist'),\n  isHot: current.temp > 85,\n  isCold: current.temp < 40,\n  isWindy: current.wind_speed > 15,\n  isHumid: current.humidity > 70,\n  isDaytime: Date.now() / 1000 > current.sunrise && Date.now() / 1000 < current.sunset,\n  rainSoon: forecast.slice(0, 3).some(item => item.weather_main.toLowerCase().includes('rain') || item.pop > 0.5),\n  tempDropping: forecast[0].temp > forecast[2].temp + 5,\n  tempRising: forecast[2].temp > forecast[0].temp + 5\n};\n\n// Create triggers based on conditions\nconst triggers = [];\n\nif (conditions.isRaining) triggers.push('rain');\nif (conditions.isSnowing) triggers.push('snow');\nif (conditions.isClear && conditions.isDaytime) triggers.push('sunny');\nif (conditions.isClear && !conditions.isDaytime) triggers.push('clear-night');\nif (conditions.isCloudy) triggers.push('cloudy');\nif (conditions.isStormy) triggers.push('storm');\nif (conditions.isFoggy) triggers.push('fog');\nif (conditions.isHot) triggers.push('hot');\nif (conditions.isCold) triggers.push('cold');\nif (conditions.isWindy) triggers.push('windy');\nif (conditions.isHumid) triggers.push('humid');\nif (conditions.rainSoon) triggers.push('rain-soon');\nif (conditions.tempDropping) triggers.push('cooling');\nif (conditions.tempRising) triggers.push('warming');\n\n// Return the combined data\nreturn {\n  location,\n  current,\n  forecast: forecast.slice(0, 3), // Next 9 hours (3 x 3-hour intervals)\n  conditions,\n  triggers,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "name": "Process Weather Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.triggers.includes('rain') || $json.triggers.includes('rain-soon') }}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Rain Detected?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "your-chat-id",
+        "text": "=🌧️ **Rain Alert for {{ $json.location.name }}**\n\nCurrent conditions: {{ $json.current.weather_description }}\nTemperature: {{ $json.current.temp }}°F\nHumidity: {{ $json.current.humidity }}%\n\n{% if $json.triggers.includes('rain') %}\nIt's currently raining! Don't forget your umbrella.\n{% else %}\nRain is expected in the next few hours. Be prepared!\n{% endif %}",
+        "options": {
+          "parseMode": "Markdown"
+        }
+      },
+      "name": "Send Rain Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "name": "Telegram API",
+          "apiKey": "YOUR_TELEGRAM_BOT_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.triggers.includes('hot') }}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Hot Weather?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.smartthings.com/v1/devices/YOUR_DEVICE_ID/commands",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "commands",
+              "value": "[{\"component\":\"main\",\"capability\":\"thermostatCoolingSetpoint\",\"command\":\"setCoolingSetpoint\",\"arguments\":[72]}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Adjust AC Temperature",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        400
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "SmartThings API",
+          "value": "Bearer YOUR_SMARTTHINGS_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.triggers.includes('sunny') && $json.current.temp > 75 }}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Sunny and Warm?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.smartthings.com/v1/devices/YOUR_DEVICE_ID/commands",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "commands",
+              "value": "[{\"component\":\"main\",\"capability\":\"switch\",\"command\":\"on\",\"arguments\":[]}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Turn On Sprinklers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        500
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "SmartThings API",
+          "value": "Bearer YOUR_SMARTTHINGS_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "A:Z",
+        "options": {
+          "valueInputMode": "RAW"
+        },
+        "valueInputOption": "USER_ENTERED",
+        "valueRenderOption": "UNFORMATTED_VALUE",
+        "data": {
+          "values": [
+            [
+              "={{ $json.timestamp }}",
+              "={{ $json.location.name }}",
+              "={{ $json.current.temp }}",
+              "={{ $json.current.weather_main }}",
+              "={{ $json.current.weather_description }}",
+              "={{ $json.current.humidity }}",
+              "={{ $json.current.wind_speed }}",
+              "={{ $json.triggers.join(\", \") }}"
+            ]
+          ]
+        }
+      },
+      "name": "Log Weather Data",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        2010,
+        700
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "name": "Google Sheets OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Location List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Location List": {
+      "main": [
+        [
+          {
+            "node": "Split Locations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Locations": {
+      "main": [
+        [
+          {
+            "node": "Get Current Weather",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Weather Forecast",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Current Weather": {
+      "main": [
+        [
+          {
+            "node": "Process Weather Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Weather Data": {
+      "main": [
+        [
+          {
+            "node": "Rain Detected?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rain Detected?": {
+      "main": [
+        [
+          {
+            "node": "Send Rain Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Hot Weather?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Rain Alert": {
+      "main": [
+        [
+          {
+            "node": "Hot Weather?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot Weather?": {
+      "main": [
+        [
+          {
+            "node": "Adjust AC Temperature",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sunny and Warm?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adjust AC Temperature": {
+      "main": [
+        [
+          {
+            "node": "Sunny and Warm?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sunny and Warm?": {
+      "main": [
+        [
+          {
+            "node": "Turn On Sprinklers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Weather Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Turn On Sprinklers": {
+      "main": [
+        [
+          {
+            "node": "Log Weather Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "7",
+  "id": "7",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

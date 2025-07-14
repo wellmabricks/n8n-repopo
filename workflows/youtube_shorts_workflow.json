@@ -1,0 +1,514 @@
+{
+  "name": "YouTube Shorts Story Generator - Webhook Enabled",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "YOUR_CLOUDFLARE_WORKER_ROUTE_HERE",
+        "method": "POST",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate story ideas based on trending topics\nconst storyPrompts = [\n  \"A day in the life of a time traveler who can only go back 24 hours\",\n  \"What happens when AI becomes self-aware in a smart home\",\n  \"The last person on Earth discovers they're not actually alone\",\n  \"A world where emotions are currency and you're running out\",\n  \"Someone finds a phone that can call any version of themselves\",\n  \"The story of the person who has to reset the universe every day\",\n  \"What if gravity worked differently for just one person\",\n  \"A library where books write themselves based on visitors' thoughts\",\n  \"The janitor who accidentally becomes the most powerful person alive\",\n  \"A world where memories can be traded like collectible cards\"\n];\nconst selectedPrompt = storyPrompts[Math.floor(Math.random() * storyPrompts.length)];\n// Generate story structure\nconst storyStructure = {\n  title: selectedPrompt,\n  hook: \"Generate an attention-grabbing opening that immediately draws viewers in\",\n  segments: [\n    {\n      id: 1,\n      text: \"Opening hook - introduce the main concept in an intriguing way\",\n      duration: 3,\n      image_prompt: `${selectedPrompt} - opening scene, cinematic, dramatic lighting`\n    },\n    {\n      id: 2,\n      text: \"Build tension - show the conflict or challenge\",\n      duration: 4,\n      image_prompt: `${selectedPrompt} - conflict scene, tension, dramatic moment`\n    },\n    {\n      id: 3,\n      text: \"Climax - the most exciting or surprising moment\",\n      duration: 4,\n      image_prompt: `${selectedPrompt} - climax scene, action, intense moment`\n    },\n    {\n      id: 4,\n      text: \"Resolution - wrap up with a satisfying or thought-provoking ending\",\n      duration: 3,\n      image_prompt: `${selectedPrompt} - resolution scene, conclusion, emotional impact`\n    }\n  ],\n  total_duration: 14,\n  target_audience: \"General audience interested in sci-fi and fantasy stories\",\n  style: \"Engaging, fast-paced, visually striking\"\n};\nreturn {\n  story_structure: storyStructure,\n  timestamp: new Date().toISOString(),\n  workflow_id: $('Webhook Trigger').first().json.id || 'manual-trigger'\n};"
+      },
+      "id": "story-generator",
+      "name": "Story Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "options": {},
+        "requestMethod": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [{ role: 'system', content: 'You are a creative storyteller specializing in YouTube Shorts. Create engaging, concise narratives that capture attention immediately and maintain interest throughout.' }, { role: 'user', content: `Create a detailed script for a YouTube Short based on this concept: ${$json.story_structure.title}. The story should be exactly 4 segments, each 3-4 sentences long. Make it engaging, visual, and perfect for a 15-second video format. Include specific visual descriptions for each segment.` }] }}"
+            },
+            {
+              "name": "max_tokens",
+              "value": 1000
+            },
+            {
+              "name": "temperature",
+              "value": 0.8
+            }
+          ]
+        }
+      },
+      "id": "script-generator",
+      "name": "Script Generator (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse OpenAI response and structure the script\nconst openaiResponse = $json;\nconst scriptContent = openaiResponse.choices[0].message.content;\n\n// Extract the story structure from previous node\nconst storyStructure = $('Story Generator').first().json.story_structure;\n\n// Parse the script into segments\nconst segments = scriptContent.split('\\n\\n').filter(segment => segment.trim().length > 0);\n\n// Create structured segments with script content\nconst structuredSegments = storyStructure.segments.map((segment, index) => {\n  const scriptText = segments[index] || `Segment ${index + 1}: ${segment.text}`;\n  \n  return {\n    id: segment.id,\n    script_text: scriptText.replace(/^(Segment \\d+:|Scene \\d+:)/i, '').trim(),\n    image_prompt: segment.image_prompt,\n    duration: segment.duration,\n    sequence: index + 1\n  };\n});\n\n// Calculate total script length\nconst totalWords = structuredSegments.reduce((total, segment) => {\n  return total + segment.script_text.split(' ').length;\n}, 0);\n\nreturn {\n  story_title: storyStructure.title,\n  segments: structuredSegments,\n  metadata: {\n    total_segments: structuredSegments.length,\n    total_duration: storyStructure.total_duration,\n    total_words: totalWords,\n    style: storyStructure.style,\n    target_audience: storyStructure.target_audience,\n    generated_at: new Date().toISOString()\n  },\n  raw_script: scriptContent\n};"
+      },
+      "id": "script-parser",
+      "name": "Script Parser",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://your-modal-endpoint.modal.run/generate-story-images ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "story_segments",
+              "value": "={{ $json.segments.map(segment => ({ prompt: segment.image_prompt, segment_id: segment.id })) }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "image-generator",
+      "name": "Generate Images (Modal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://your-modal-endpoint.modal.run/generate-story-narration ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "story_segments",
+              "value": "={{ $('Script Parser').first().json.segments.map(segment => ({ text: segment.script_text, segment_id: segment.id })) }}"
+            },
+            {
+              "name": "voice",
+              "value": "en"
+            },
+            {
+              "name": "speed",
+              "value": 1.1
+            },
+            {
+              "name": "pause_between_segments",
+              "value": 0.3
+            }
+          ]
+        },
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "tts-generator",
+      "name": "Generate Narration (Modal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Combine images and audio data for video assembly\nconst imageData = $('Generate Images (Modal)').first().json;\nconst audioData = $('Generate Narration (Modal)').first().json;\nconst scriptData = $('Script Parser').first().json;\n\nif (!imageData.success || !audioData.success) {\n  throw new Error('Image or audio generation failed');\n}\n\n// Create video segments by combining images, audio, and text\nconst videoSegments = scriptData.segments.map((segment, index) => {\n  const imageSegment = imageData.images.find(img => img.segment_index === index);\n  const audioSegment = audioData.segments.find(audio => audio.segment_index === index);\n  \n  if (!imageSegment || !audioSegment) {\n    throw new Error(`Missing data for segment ${index + 1}`);\n  }\n  \n  return {\n    image_base64: imageSegment.image_base64,\n    audio_base64: audioSegment.audio_base64,\n    text: segment.script_text,\n    duration: audioSegment.duration_seconds || segment.duration,\n    transition: index === 0 ? 'none' : 'fade'\n  };\n});\n\n// Prepare video assembly request\nconst videoRequest = {\n  segments: videoSegments,\n  title: scriptData.story_title,\n  output_format: 'mp4',\n  fps: 30,\n  quality: 'high'\n};\n\nreturn {\n  video_request: videoRequest,\n  metadata: {\n    total_segments: videoSegments.length,\n    total_duration: videoSegments.reduce((sum, seg) => sum + seg.duration, 0),\n    story_title: scriptData.story_title,\n    generated_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "video-combiner",
+      "name": "Video Data Combiner",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://your-modal-endpoint.modal.run/assemble-video ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "segments",
+              "value": "={{ $json.video_request.segments }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.video_request.title }}"
+            },
+            {
+              "name": "output_format",
+              "value": "mp4"
+            },
+            {
+              "name": "fps",
+              "value": 30
+            },
+            {
+              "name": "quality",
+              "value": "high"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "id": "video-assembler",
+      "name": "Assemble Video (Modal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1560, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://qflapwllxftcsdukoals.supabase.co ",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxxxx"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $('Video Data Combiner').first().json.metadata.story_title }}"
+            },
+            {
+              "name": "video_data",
+              "value": "={{ $json.video_base64 }}"
+            },
+            {
+              "name": "duration",
+              "value": "={{ $('Video Data Combiner').first().json.metadata.total_duration }}"
+            },
+            {
+              "name": "segments_count",
+              "value": "={{ $('Video Data Combiner').first().json.metadata.total_segments }}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "name": "status",
+              "value": "completed"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($('Video Data Combiner').first().json.metadata) }}"
+            }
+          ]
+        },
+        "uri": "/rest/v1/youtube_shorts"
+      },
+      "id": "supabase-storage",
+      "name": "Store in Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1780, 400]
+    },
+    {
+      "parameters": {
+        "url": "mongodb://aitoolpool:Bcmoney69@n8n-shard-00-00.s41bn.mongodb.net:27017,n8n-shard-00-01.s41bn.mongodb.net:27017,n8n-shard-00-02.s41bn.mongodb.net:27017/Scraped_data?replicaSet=atlas-mfm10l-shard-0&ssl=true&authSource=admin&retryWrites=true&w=majority&appName=n8n",
+        "operation": "insert",
+        "collection": "Videos",
+        "fields": "title,video_data,duration,segments_count,created_at,status,metadata,workflow_id",
+        "options": {}
+      },
+      "id": "mongodb-storage",
+      "name": "Store in MongoDB",
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1,
+      "position": [1780, 600]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate YouTube metadata and prepare for upload\nconst videoData = $('Assemble Video (Modal)').first().json;\nconst scriptData = $('Script Parser').first().json;\n\nif (!videoData.success) {\n  throw new Error('Video assembly failed');\n}\n\n// Generate YouTube title (max 100 characters)\nconst title = scriptData.story_title.length > 97 ? \n  scriptData.story_title.substring(0, 97) + '...' : \n  scriptData.story_title;\n\n// Generate description\nconst description = `${scriptData.raw_script}\n\n#Shorts #Story #AI #Creative #Entertainment\n\nGenerated with AI for entertainment purposes.\n\nTags: storytelling, creative content, short stories, AI generated`;\n\n// Generate tags\nconst tags = [\n  'shorts',\n  'story',\n  'creative',\n  'entertainment',\n  'ai',\n  'storytelling',\n  'short stories',\n  'viral',\n  'trending'\n];\n\nreturn {\n  youtube_metadata: {\n    title: title,\n    description: description,\n    tags: tags,\n    category: '24', // Entertainment\n    privacy: 'public',\n    thumbnail_time: '00:00:02'\n  },\n  video_base64: videoData.video_base64,\n  video_metadata: videoData.metadata,\n  upload_ready: true,\n  generated_at: new Date().toISOString()\n};"
+      },
+      "id": "youtube-metadata",
+      "name": "YouTube Metadata Generator",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2000, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Success notification and metrics\nconst videoData = $('Assemble Video (Modal)').first().json;\nconst metadata = $('Video Data Combiner').first().json.metadata;\n\nreturn {\n  success: true,\n  message: 'YouTube Short generated successfully',\n  video_url: videoData.download_url || 'embedded',\n  video_title: metadata.story_title,\n  duration: metadata.total_duration,\n  segments: metadata.total_segments,\n  file_size: videoData.metadata?.size_bytes || 'unknown',\n  generated_at: new Date().toISOString(),\n  youtube_metadata: $('YouTube Metadata Generator').first().json.youtube_metadata,\n  workflow_completed: true\n};"
+      },
+      "id": "success-handler",
+      "name": "Success Handler",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [2220, 400]
+    },
+    {
+      "parameters": {
+        "responseMode": "lastNode",
+        "responseData": "allEntries",
+        "executionStatus": "success"
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [2440, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Error handling and retry logic\nconst currentNode = $node;\nconst executionData = $execution;\n\n// Check if this is a retry\nconst retryCount = $json.retry_count || 0;\nconst maxRetries = 3;\n\nif (retryCount >= maxRetries) {\n  // Send error notification\n  return {\n    error: 'Maximum retries exceeded',\n    retry_count: retryCount,\n    timestamp: new Date().toISOString(),\n    send_notification: true\n  };\n}\n\n// Log the error\nconsole.error('Workflow error:', $json.error);\n\n// Prepare retry data\nreturn {\n  retry_count: retryCount + 1,\n  error: $json.error,\n  retry_at: new Date(Date.now() + (retryCount + 1) * 30000).toISOString(), // Exponential backoff\n  original_data: $json\n};"
+      },
+      "id": "error-handler",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1340, 700]
+    },
+    {
+      "parameters": {
+        "to": "robertmcasper@gmail.com",
+        "subject": "YouTube Shorts Workflow Error",
+        "message": "An error occurred in the YouTube Shorts generation workflow:\n\nError: {{ $json.error }}\nRetry Count: {{ $json.retry_count }}\nTimestamp: {{ $json.timestamp }}\n\nPlease check the n8n workflow for details.",
+        "options": {}
+      },
+      "id": "error-notification",
+      "name": "Send Error Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1560, 700]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Story Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Story Generator": {
+      "main": [
+        [
+          {
+            "node": "Script Generator (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Generator (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Script Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Parser": {
+      "main": [
+        [
+          {
+            "node": "Generate Images (Modal)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Narration (Modal)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Images (Modal)": {
+      "main": [
+        [
+          {
+            "node": "Video Data Combiner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Narration (Modal)": {
+      "main": [
+        [
+          {
+            "node": "Video Data Combiner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Video Data Combiner": {
+      "main": [
+        [
+          {
+            "node": "Assemble Video (Modal)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Video (Modal)": {
+      "main": [
+        [
+          {
+            "node": "Store in Supabase",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Store in MongoDB",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YouTube Metadata Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Supabase": {
+      "main": [
+        [
+          {
+            "node": "Success Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Metadata Generator": {
+      "main": [
+        [
+          {
+            "node": "Success Handler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success Handler": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Handler": {
+      "main": [
+        [
+          {
+            "node": "Send Error Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "tags": [
+    {
+      "id": "youtube-shorts",
+      "name": "YouTube Shorts"
+    },
+    {
+      "id": "ai-content",
+      "name": "AI Content"
+    },
+    {
+      "id": "automation",
+      "name": "Automation"
+    }
+  ],
+  "versionId": "1",
+  "updatedAt": "2025-01-09T10:00:00.000Z"
+}

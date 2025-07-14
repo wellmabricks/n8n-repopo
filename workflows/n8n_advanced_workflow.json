@@ -1,0 +1,463 @@
+{
+  "name": "Advanced Jewelry Image Processing Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jewelry-batch-processing",
+        "options": {}
+      },
+      "name": "Batch Processing Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from webhook\nconst folderPath = $input.item.json.folder_path;\nconst webhookUrl = $input.item.json.webhook_url || '';\nconst apiKey = $input.item.json.api_key || '';\n\n// Create output\nreturn {\n  folderPath,\n  webhookUrl,\n  apiKey,\n  timestamp: new Date().toISOString(),\n  status: 'scanning'\n};"
+      },
+      "name": "Process Webhook Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "path": "={{ $json.folderPath }}",
+        "options": {
+          "recursive": true
+        }
+      },
+      "name": "List Files in Folder",
+      "type": "n8n-nodes-base.readBinaryFiles",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $binary.mimeType }}",
+              "value2": "image/",
+              "operation": "startsWith"
+            }
+          ]
+        }
+      },
+      "name": "Filter Images",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.example.com/jewelry-classifier/n8n/webhook",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-N8N-API-Key",
+              "value": "={{ $json.apiKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_path",
+              "value": "={{ $binary.path }}"
+            },
+            {
+              "name": "webhook_url",
+              "value": "={{ $json.webhookUrl }}"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $json.apiKey }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send to Jewelry Classifier",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Skip non-image files\nreturn {\n  skipped: true,\n  filePath: $binary.path,\n  mimeType: $binary.mimeType\n};"
+      },
+      "name": "Skip Non-Image",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "schema": "public",
+        "table": "jewelry_processing_batch",
+        "columns": "batchId, filePath, status, timestamp, jobId",
+        "additionalFields": {}
+      },
+      "name": "Log to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "schema": "public",
+        "table": "jewelry_processing_batch",
+        "columns": "batchId, filePath, status, timestamp, skipped, reason",
+        "additionalFields": {}
+      },
+      "name": "Log Skipped to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jewelry-processing-callback",
+        "options": {}
+      },
+      "name": "Processing Callback Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from webhook\nconst jobId = $input.item.json.job_id;\nconst results = $input.item.json.results;\n\n// Create output\nreturn {\n  jobId,\n  results,\n  timestamp: new Date().toISOString(),\n  status: results.error ? 'error' : 'completed'\n};"
+      },
+      "name": "Process Callback Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.status }}",
+              "value2": "error",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "name": "Check Status",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "jewelry_processing_batch",
+        "updateKey": "jobId",
+        "columns": "status, error, completedAt",
+        "additionalFields": {}
+      },
+      "name": "Update Error in Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        850,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "jewelry_processing_batch",
+        "updateKey": "jobId",
+        "columns": "status, completedAt, title, description, price, seoScore",
+        "additionalFields": {}
+      },
+      "name": "Update Success in Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        850,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "jewelry_processing_batch",
+        "columns": "COUNT(*) as total, SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed, SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as errors",
+        "additionalFields": {}
+      },
+      "name": "Get Batch Statistics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.total }}",
+              "value2": "={{ $json.completed + $json.errors }}",
+              "operation": "equals"
+            }
+          ]
+        }
+      },
+      "name": "Check if Batch Complete",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "notifications@example.com",
+        "toEmail": "admin@example.com",
+        "subject": "Jewelry Batch Processing Completed",
+        "text": "=Batch processing has completed.\n\nTotal files: {{ $json.total }}\nSuccessfully processed: {{ $json.completed }}\nErrors: {{ $json.errors }}\n\nTimestamp: {{ $now() }}"
+      },
+      "name": "Send Completion Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Batch still in progress\nreturn {\n  message: 'Batch processing still in progress',\n  completed: $json.completed,\n  total: $json.total,\n  remaining: $json.total - ($json.completed + $json.errors)\n};"
+      },
+      "name": "Batch In Progress",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        700
+      ]
+    }
+  ],
+  "connections": {
+    "Batch Processing Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Webhook Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Webhook Data": {
+      "main": [
+        [
+          {
+            "node": "List Files in Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Files in Folder": {
+      "main": [
+        [
+          {
+            "node": "Filter Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Images": {
+      "main": [
+        [
+          {
+            "node": "Send to Jewelry Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip Non-Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Jewelry Classifier": {
+      "main": [
+        [
+          {
+            "node": "Log to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Non-Image": {
+      "main": [
+        [
+          {
+            "node": "Log Skipped to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Processing Callback Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Callback Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Callback Data": {
+      "main": [
+        [
+          {
+            "node": "Check Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Status": {
+      "main": [
+        [
+          {
+            "node": "Update Error in Database",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Success in Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Error in Database": {
+      "main": [
+        [
+          {
+            "node": "Get Batch Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Success in Database": {
+      "main": [
+        [
+          {
+            "node": "Get Batch Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Batch Statistics": {
+      "main": [
+        [
+          {
+            "node": "Check if Batch Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if Batch Complete": {
+      "main": [
+        [
+          {
+            "node": "Send Completion Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Batch In Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
+

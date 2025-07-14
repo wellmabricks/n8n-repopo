@@ -1,0 +1,633 @@
+{
+  "name": "Data Synchronization Between Services",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "list",
+        "returnAll": true,
+        "additionalFields": {}
+      },
+      "name": "Get CRM Contacts",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "hubspotApi": {
+          "name": "HubSpot API",
+          "apiKey": "YOUR_HUBSPOT_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process the contacts from HubSpot\nconst contacts = $input.item.json.contacts || [];\n\n// Format the contacts for synchronization\nreturn contacts.map(contact => {\n  // Extract properties\n  const props = contact.properties || {};\n  \n  // Format the contact data\n  return {\n    id: contact.id,\n    email: props.email || '',\n    firstName: props.firstname || '',\n    lastName: props.lastname || '',\n    phone: props.phone || '',\n    company: props.company || '',\n    jobTitle: props.jobtitle || '',\n    address: props.address || '',\n    city: props.city || '',\n    state: props.state || '',\n    zipCode: props.zip || '',\n    country: props.country || '',\n    website: props.website || '',\n    leadSource: props.leadsource || '',\n    lastModifiedDate: props.lastmodifieddate || '',\n    createdDate: props.createdate || '',\n    lifecycleStage: props.lifecyclestage || '',\n    status: props.status || '',\n    // Add a sync identifier\n    syncSource: 'hubspot',\n    syncId: `hubspot-${contact.id}`,\n    syncTimestamp: new Date().toISOString()\n  };\n});"
+      },
+      "name": "Format CRM Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "list",
+        "returnAll": true,
+        "options": {}
+      },
+      "name": "Get Marketing Contacts",
+      "type": "n8n-nodes-base.mailchimp",
+      "typeVersion": 1,
+      "position": [
+        470,
+        500
+      ],
+      "credentials": {
+        "mailchimpApi": {
+          "name": "Mailchimp API",
+          "apiKey": "YOUR_MAILCHIMP_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process the contacts from Mailchimp\nconst members = $input.item.json.members || [];\n\n// Format the contacts for synchronization\nreturn members.map(member => {\n  // Extract merge fields\n  const mergeFields = member.merge_fields || {};\n  \n  // Format the contact data\n  return {\n    id: member.id,\n    email: member.email_address || '',\n    firstName: mergeFields.FNAME || '',\n    lastName: mergeFields.LNAME || '',\n    phone: mergeFields.PHONE || '',\n    company: mergeFields.COMPANY || '',\n    jobTitle: mergeFields.JOBTITLE || '',\n    address: mergeFields.ADDRESS || '',\n    city: mergeFields.CITY || '',\n    state: mergeFields.STATE || '',\n    zipCode: mergeFields.ZIP || '',\n    country: mergeFields.COUNTRY || '',\n    website: mergeFields.WEBSITE || '',\n    leadSource: 'mailchimp',\n    lastModifiedDate: member.last_changed || '',\n    createdDate: member.timestamp_signup || '',\n    lifecycleStage: member.status || '',\n    status: member.status || '',\n    // Add a sync identifier\n    syncSource: 'mailchimp',\n    syncId: `mailchimp-${member.id}`,\n    syncTimestamp: new Date().toISOString()\n  };\n});"
+      },
+      "name": "Format Marketing Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "list",
+        "returnAll": true,
+        "options": {}
+      },
+      "name": "Get Accounting Contacts",
+      "type": "n8n-nodes-base.quickbooks",
+      "typeVersion": 1,
+      "position": [
+        470,
+        700
+      ],
+      "credentials": {
+        "quickBooksOAuth2Api": {
+          "name": "QuickBooks OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process the contacts from QuickBooks\nconst customers = $input.item.json.Customer || [];\n\n// Format the contacts for synchronization\nreturn customers.map(customer => {\n  // Extract address\n  const address = customer.BillAddr || {};\n  \n  // Format the contact data\n  return {\n    id: customer.Id,\n    email: customer.PrimaryEmailAddr?.Address || '',\n    firstName: customer.GivenName || '',\n    lastName: customer.FamilyName || '',\n    phone: customer.PrimaryPhone?.FreeFormNumber || '',\n    company: customer.CompanyName || '',\n    jobTitle: '',\n    address: address.Line1 || '',\n    city: address.City || '',\n    state: address.CountrySubDivisionCode || '',\n    zipCode: address.PostalCode || '',\n    country: address.Country || '',\n    website: customer.WebAddr?.URI || '',\n    leadSource: 'quickbooks',\n    lastModifiedDate: customer.MetaData?.LastUpdatedTime || '',\n    createdDate: customer.MetaData?.CreateTime || '',\n    lifecycleStage: 'customer',\n    status: customer.Active ? 'active' : 'inactive',\n    // Add a sync identifier\n    syncSource: 'quickbooks',\n    syncId: `quickbooks-${customer.Id}`,\n    syncTimestamp: new Date().toISOString()\n  };\n});"
+      },
+      "name": "Format Accounting Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByFields",
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "email",
+              "field2": "email"
+            }
+          ]
+        },
+        "options": {
+          "multipleMatches": "first"
+        }
+      },
+      "name": "Merge Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        910,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "mergeByFields",
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "email",
+              "field2": "email"
+            }
+          ]
+        },
+        "options": {
+          "multipleMatches": "first"
+        }
+      },
+      "name": "Merge All Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        1130,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process the merged contacts\nconst contacts = $input.item;\n\n// Create a map to track the latest data for each contact\nconst contactMap = new Map();\n\n// Process each contact\nfor (const contact of contacts) {\n  const email = contact.json.email.toLowerCase();\n  \n  // Skip if no email\n  if (!email) continue;\n  \n  // Get existing contact or create new one\n  const existing = contactMap.get(email) || {\n    email,\n    sources: [],\n    syncTimestamp: '',\n    needsUpdate: {}\n  };\n  \n  // Add this source\n  existing.sources.push(contact.json.syncSource);\n  \n  // Check if this is newer data\n  if (!existing.syncTimestamp || contact.json.syncTimestamp > existing.syncTimestamp) {\n    existing.syncTimestamp = contact.json.syncTimestamp;\n    \n    // Copy all fields\n    for (const [key, value] of Object.entries(contact.json)) {\n      if (key !== 'sources' && key !== 'needsUpdate' && value) {\n        existing[key] = value;\n      }\n    }\n  }\n  \n  // Determine which systems need updates\n  const sources = ['hubspot', 'mailchimp', 'quickbooks'];\n  existing.needsUpdate = {};\n  \n  for (const source of sources) {\n    if (!existing.sources.includes(source)) {\n      existing.needsUpdate[source] = true;\n    }\n  }\n  \n  // Update the map\n  contactMap.set(email, existing);\n}\n\n// Convert map to array\nreturn Array.from(contactMap.values());"
+      },
+      "name": "Reconcile Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        500
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Split Contacts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needsUpdate.hubspot }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Update CRM?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "contactId": "={{ $json.id }}",
+        "updateFields": {
+          "values": {
+            "email": "={{ $json.email }}",
+            "firstname": "={{ $json.firstName }}",
+            "lastname": "={{ $json.lastName }}",
+            "phone": "={{ $json.phone }}",
+            "company": "={{ $json.company }}",
+            "jobtitle": "={{ $json.jobTitle }}",
+            "address": "={{ $json.address }}",
+            "city": "={{ $json.city }}",
+            "state": "={{ $json.state }}",
+            "zip": "={{ $json.zipCode }}",
+            "country": "={{ $json.country }}",
+            "website": "={{ $json.website }}"
+          }
+        }
+      },
+      "name": "Update CRM Contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        400
+      ],
+      "credentials": {
+        "hubspotApi": {
+          "name": "HubSpot API",
+          "apiKey": "YOUR_HUBSPOT_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needsUpdate.mailchimp }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Update Marketing?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "listId": "YOUR_LIST_ID",
+        "email": "={{ $json.email }}",
+        "options": {
+          "mergeTags": {
+            "FNAME": "={{ $json.firstName }}",
+            "LNAME": "={{ $json.lastName }}",
+            "PHONE": "={{ $json.phone }}",
+            "COMPANY": "={{ $json.company }}",
+            "JOBTITLE": "={{ $json.jobTitle }}",
+            "ADDRESS": "={{ $json.address }}",
+            "CITY": "={{ $json.city }}",
+            "STATE": "={{ $json.state }}",
+            "ZIP": "={{ $json.zipCode }}",
+            "COUNTRY": "={{ $json.country }}",
+            "WEBSITE": "={{ $json.website }}"
+          }
+        }
+      },
+      "name": "Update Marketing Contact",
+      "type": "n8n-nodes-base.mailchimp",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        500
+      ],
+      "credentials": {
+        "mailchimpApi": {
+          "name": "Mailchimp API",
+          "apiKey": "YOUR_MAILCHIMP_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.needsUpdate.quickbooks }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Update Accounting?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "customerId": "={{ $json.id }}",
+        "updateFields": {
+          "values": {
+            "GivenName": "={{ $json.firstName }}",
+            "FamilyName": "={{ $json.lastName }}",
+            "CompanyName": "={{ $json.company }}",
+            "PrimaryEmailAddr": {
+              "Address": "={{ $json.email }}"
+            },
+            "PrimaryPhone": {
+              "FreeFormNumber": "={{ $json.phone }}"
+            },
+            "BillAddr": {
+              "Line1": "={{ $json.address }}",
+              "City": "={{ $json.city }}",
+              "CountrySubDivisionCode": "={{ $json.state }}",
+              "PostalCode": "={{ $json.zipCode }}",
+              "Country": "={{ $json.country }}"
+            },
+            "WebAddr": {
+              "URI": "={{ $json.website }}"
+            }
+          }
+        }
+      },
+      "name": "Update Accounting Contact",
+      "type": "n8n-nodes-base.quickbooks",
+      "typeVersion": 1,
+      "position": [
+        2450,
+        600
+      ],
+      "credentials": {
+        "quickBooksOAuth2Api": {
+          "name": "QuickBooks OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "A:Z",
+        "options": {
+          "valueInputMode": "RAW"
+        },
+        "valueInputOption": "USER_ENTERED",
+        "valueRenderOption": "UNFORMATTED_VALUE",
+        "data": {
+          "values": [
+            [
+              "={{ $json.email }}",
+              "={{ $json.firstName }}",
+              "={{ $json.lastName }}",
+              "={{ $json.phone }}",
+              "={{ $json.company }}",
+              "={{ $json.jobTitle }}",
+              "={{ $json.address }}",
+              "={{ $json.city }}",
+              "={{ $json.state }}",
+              "={{ $json.zipCode }}",
+              "={{ $json.country }}",
+              "={{ $json.website }}",
+              "={{ $json.leadSource }}",
+              "={{ $json.status }}",
+              "={{ $json.sources.join(\", \") }}",
+              "={{ $json.syncTimestamp }}"
+            ]
+          ]
+        }
+      },
+      "name": "Log Sync Activity",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        2670,
+        500
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "name": "Google Sheets OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get CRM Contacts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Marketing Contacts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Accounting Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get CRM Contacts": {
+      "main": [
+        [
+          {
+            "node": "Format CRM Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format CRM Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Marketing Contacts": {
+      "main": [
+        [
+          {
+            "node": "Format Marketing Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Marketing Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Accounting Contacts": {
+      "main": [
+        [
+          {
+            "node": "Format Accounting Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Accounting Data": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Data": {
+      "main": [
+        [
+          {
+            "node": "Merge All Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Data": {
+      "main": [
+        [
+          {
+            "node": "Reconcile Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reconcile Data": {
+      "main": [
+        [
+          {
+            "node": "Split Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Contacts": {
+      "main": [
+        [
+          {
+            "node": "Update CRM?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CRM?": {
+      "main": [
+        [
+          {
+            "node": "Update CRM Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Marketing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CRM Contact": {
+      "main": [
+        [
+          {
+            "node": "Update Marketing?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Marketing?": {
+      "main": [
+        [
+          {
+            "node": "Update Marketing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Accounting?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Marketing Contact": {
+      "main": [
+        [
+          {
+            "node": "Update Accounting?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Accounting?": {
+      "main": [
+        [
+          {
+            "node": "Update Accounting Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Sync Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Accounting Contact": {
+      "main": [
+        [
+          {
+            "node": "Log Sync Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "6",
+  "id": "6",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

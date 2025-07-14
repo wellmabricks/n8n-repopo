@@ -1,0 +1,322 @@
+{
+  "name": "AI Content Generation for Social Media",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "country",
+                "value": "us"
+              },
+              {
+                "name": "category",
+                "value": "technology"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Get Trending News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "name": "News API",
+          "apiKey": "YOUR_NEWS_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract the top 3 articles\nconst articles = $input.item.json.articles.slice(0, 3);\n\n// Format the articles for processing\nreturn articles.map(article => {\n  return {\n    title: article.title,\n    description: article.description,\n    url: article.url,\n    source: article.source.name,\n    publishedAt: article.publishedAt,\n    imageUrl: article.urlToImage\n  };\n});"
+      },
+      "name": "Process News",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Split Articles",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "chat",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a social media content creator specializing in creating engaging posts for different platforms. Your task is to create content based on news articles that will drive engagement and shares."
+            },
+            {
+              "role": "user",
+              "content": "=Create social media content for the following article:\n\nTitle: {{ $json.title }}\nDescription: {{ $json.description }}\nSource: {{ $json.source }}\n\nPlease create:\n1. A Twitter/X post (max 280 characters) with relevant hashtags\n2. A LinkedIn post (professional tone, 3-4 paragraphs)\n3. A Facebook post (conversational, with a question to engage followers)\n4. An Instagram caption with relevant hashtags\n\nMake each post unique and tailored to the platform. Include emojis where appropriate."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Generate Content",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "name": "OpenAI",
+          "apiKey": "YOUR_OPENAI_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract the article information\nconst article = {\n  title: $input.item.json.title,\n  description: $input.item.json.description,\n  url: $input.item.json.url,\n  source: $input.item.json.source,\n  publishedAt: $input.item.json.publishedAt,\n  imageUrl: $input.item.json.imageUrl\n};\n\n// Extract the AI-generated content\nconst aiContent = $input.item.json.message.content;\n\n// Parse the different platform posts\nconst twitterMatch = aiContent.match(/Twitter\\/X post[:\\s]+(.*?)(?=\\n\\n|$)/s);\nconst linkedinMatch = aiContent.match(/LinkedIn post[:\\s]+(.*?)(?=\\n\\n|$)/s);\nconst facebookMatch = aiContent.match(/Facebook post[:\\s]+(.*?)(?=\\n\\n|$)/s);\nconst instagramMatch = aiContent.match(/Instagram caption[:\\s]+(.*?)(?=\\n\\n|$)/s);\n\n// Create the structured output\nreturn {\n  article,\n  content: {\n    twitter: twitterMatch ? twitterMatch[1].trim() : '',\n    linkedin: linkedinMatch ? linkedinMatch[1].trim() : '',\n    facebook: facebookMatch ? facebookMatch[1].trim() : '',\n    instagram: instagramMatch ? instagramMatch[1].trim() : ''\n  },\n  timestamp: new Date().toISOString(),\n  scheduledTime: {\n    twitter: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString(), // +1 hour\n    linkedin: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // +2 hours\n    facebook: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), // +3 hours\n    instagram: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()  // +4 hours\n  }\n};"
+      },
+      "name": "Format Content",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.twitter.com/2/tweets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "={{ $json.content.twitter }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Post to Twitter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        100
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "Twitter API",
+          "value": "Bearer YOUR_TWITTER_BEARER_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "post",
+        "owner": "me",
+        "text": "={{ $json.content.linkedin }}",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.linkedin",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        300
+      ],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "name": "LinkedIn OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "post",
+        "pageId": "YOUR_PAGE_ID",
+        "text": "={{ $json.content.facebook }}",
+        "additionalFields": {
+          "link": "={{ $json.article.url }}"
+        }
+      },
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        500
+      ],
+      "credentials": {
+        "facebookGraphOAuth2Api": {
+          "name": "Facebook OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "mediaPost",
+        "mediaType": "image",
+        "mediaFilesUi": {
+          "mediaFiles": [
+            {
+              "binaryPropertyName": "={{ $json.article.imageUrl }}"
+            }
+          ]
+        },
+        "caption": "={{ $json.content.instagram }}"
+      },
+      "name": "Post to Instagram",
+      "type": "n8n-nodes-base.instagram",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        700
+      ],
+      "credentials": {
+        "instagramGraphApi": {
+          "name": "Instagram Graph API",
+          "oauthTokenData": {}
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Trending News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Trending News": {
+      "main": [
+        [
+          {
+            "node": "Process News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process News": {
+      "main": [
+        [
+          {
+            "node": "Split Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Articles": {
+      "main": [
+        [
+          {
+            "node": "Generate Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Content": {
+      "main": [
+        [
+          {
+            "node": "Format Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Content": {
+      "main": [
+        [
+          {
+            "node": "Post to Twitter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post to LinkedIn",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post to Facebook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Post to Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "4",
+  "id": "4",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

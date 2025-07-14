@@ -1,0 +1,650 @@
+{
+  "name": "Multi-Platform Social Media Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schedule-post",
+        "options": {}
+      },
+      "name": "Schedule Post Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process the incoming webhook data\nconst data = $input.item.json.body || {};\n\n// Validate required fields\nif (!data.content || !data.platforms || !data.scheduledTime) {\n  return {\n    success: false,\n    error: \"Missing required fields: content, platforms, scheduledTime\",\n    requiredFields: [\"content\", \"platforms\", \"scheduledTime\"]\n  };\n}\n\n// Parse platforms (should be an array of strings)\nlet platforms = [];\ntry {\n  platforms = typeof data.platforms === 'string' ? JSON.parse(data.platforms) : data.platforms;\n  if (!Array.isArray(platforms)) {\n    throw new Error('Platforms must be an array');\n  }\n} catch (error) {\n  return {\n    success: false,\n    error: \"Invalid platforms format. Expected array of strings.\",\n    providedValue: data.platforms\n  };\n}\n\n// Validate platforms\nconst validPlatforms = ['twitter', 'linkedin', 'facebook', 'instagram'];\nconst invalidPlatforms = platforms.filter(p => !validPlatforms.includes(p.toLowerCase()));\nif (invalidPlatforms.length > 0) {\n  return {\n    success: false,\n    error: `Invalid platforms: ${invalidPlatforms.join(', ')}`,\n    validPlatforms\n  };\n}\n\n// Parse scheduled time\nlet scheduledTime;\ntry {\n  scheduledTime = new Date(data.scheduledTime);\n  if (isNaN(scheduledTime.getTime())) {\n    throw new Error('Invalid date');\n  }\n} catch (error) {\n  return {\n    success: false,\n    error: \"Invalid scheduledTime format. Expected ISO date string.\",\n    providedValue: data.scheduledTime\n  };\n}\n\n// Generate a unique ID for this post\nconst postId = `post_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;\n\n// Process media attachments if any\nlet media = [];\nif (data.media && Array.isArray(data.media)) {\n  media = data.media.map((item, index) => ({\n    id: `${postId}_media_${index}`,\n    url: item.url,\n    type: item.type || 'image',\n    alt: item.alt || ''\n  }));\n}\n\n// Process platform-specific content if provided\nconst platformContent = {};\nvalidPlatforms.forEach(platform => {\n  const key = `${platform}Content`;\n  if (data[key]) {\n    platformContent[platform] = data[key];\n  }\n});\n\n// Create the post object\nreturn {\n  postId,\n  content: data.content,\n  platforms: platforms.map(p => p.toLowerCase()),\n  scheduledTime: scheduledTime.toISOString(),\n  scheduledTimestamp: scheduledTime.getTime(),\n  media,\n  platformContent,\n  hashtags: data.hashtags || [],\n  mentions: data.mentions || [],\n  links: data.links || [],\n  status: 'scheduled',\n  createdAt: new Date().toISOString(),\n  success: true\n};"
+      },
+      "name": "Process Schedule Request",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.success }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Valid Request?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/tmp/social-media-scheduler/posts/{{ $json.postId }}.json",
+        "fileName": "{{ $json.postId }}.json",
+        "text": "={{ JSON.stringify($json, null, 2) }}",
+        "options": {}
+      },
+      "name": "Save Post Data",
+      "type": "n8n-nodes-base.writeTextFile",
+      "typeVersion": 1,
+      "position": [
+        910,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "command": "mkdir -p /tmp/social-media-scheduler/posts /tmp/social-media-scheduler/logs",
+        "workingDirectory": "/tmp"
+      },
+      "name": "Create Directories",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        910,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "name": "Check Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "command": "find /tmp/social-media-scheduler/posts -name \"*.json\" -type f | xargs cat | jq -s .",
+        "workingDirectory": "/tmp"
+      },
+      "name": "Load Scheduled Posts",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        470,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse the loaded posts\nlet posts = [];\ntry {\n  posts = JSON.parse($input.item.json.stdout);\n} catch (error) {\n  // If parsing fails, it might be because there are no posts yet\n  return { posts: [] };\n}\n\n// Filter for posts that are scheduled and due for publishing\nconst now = Date.now();\nconst duePosts = posts.filter(post => {\n  return post.status === 'scheduled' && post.scheduledTimestamp <= now;\n});\n\nreturn { posts: duePosts };"
+      },
+      "name": "Find Due Posts",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.posts.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "Any Due Posts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        910,
+        500
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Split Posts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the current post\nconst post = $input.item.json;\n\n// Check if Twitter/X is one of the platforms\nconst platforms = post.platforms || [];\nconst includesTwitter = platforms.includes('twitter');\n\n// Return the post with a flag for Twitter\nreturn {\n  ...post,\n  includesTwitter\n};"
+      },
+      "name": "Process Post",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.includesTwitter }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Post to Twitter?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.platformContent?.twitter || $json.content }}",
+        "additionalFields": {}
+      },
+      "name": "Post to Twitter",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        300
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "name": "Twitter OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.platforms.includes('linkedin') }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Post to LinkedIn?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "post",
+        "owner": "me",
+        "text": "={{ $json.platformContent?.linkedin || $json.content }}",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.linkedin",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        400
+      ],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "name": "LinkedIn OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.platforms.includes('facebook') }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Post to Facebook?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "post",
+        "pageId": "YOUR_PAGE_ID",
+        "text": "={{ $json.platformContent?.facebook || $json.content }}",
+        "additionalFields": {}
+      },
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        500
+      ],
+      "credentials": {
+        "facebookGraphOAuth2Api": {
+          "name": "Facebook OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.platforms.includes('instagram') }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Post to Instagram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "mediaPost",
+        "mediaType": "image",
+        "mediaFilesUi": {
+          "mediaFiles": [
+            {
+              "binaryPropertyName": "={{ $json.media[0]?.url }}"
+            }
+          ]
+        },
+        "caption": "={{ $json.platformContent?.instagram || $json.content }}"
+      },
+      "name": "Post to Instagram",
+      "type": "n8n-nodes-base.instagram",
+      "typeVersion": 1,
+      "position": [
+        2450,
+        600
+      ],
+      "credentials": {
+        "instagramGraphApi": {
+          "name": "Instagram Graph API",
+          "oauthTokenData": {}
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Update the post status to 'published'\nconst fs = require('fs');\nconst postId = $input.item.json.postId;\nconst postFilePath = `/tmp/social-media-scheduler/posts/${postId}.json`;\n\n// Read the current post data\nlet postData;\ntry {\n  const postFile = fs.readFileSync(postFilePath, 'utf8');\n  postData = JSON.parse(postFile);\n  \n  // Update the status\n  postData.status = 'published';\n  postData.publishedAt = new Date().toISOString();\n  \n  // Write the updated data back\n  fs.writeFileSync(postFilePath, JSON.stringify(postData, null, 2));\n  \n  return {\n    ...$input.item.json,\n    status: 'published',\n    publishedAt: postData.publishedAt\n  };\n} catch (error) {\n  return {\n    ...$input.item.json,\n    error: `Failed to update post status: ${error.message}`\n  };\n}"
+      },
+      "name": "Mark as Published",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2450,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "/tmp/social-media-scheduler/logs/{{ $json.postId }}_log.json",
+        "fileName": "{{ $json.postId }}_log.json",
+        "text": "={{ JSON.stringify({postId: $json.postId, content: $json.content, platforms: $json.platforms, scheduledTime: $json.scheduledTime, publishedAt: $json.publishedAt || new Date().toISOString(), status: $json.status}, null, 2) }}",
+        "options": {}
+      },
+      "name": "Log Publishing",
+      "type": "n8n-nodes-base.writeTextFile",
+      "typeVersion": 1,
+      "position": [
+        2670,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        910,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Post Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Schedule Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Schedule Request": {
+      "main": [
+        [
+          {
+            "node": "Valid Request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Request?": {
+      "main": [
+        [
+          {
+            "node": "Create Directories",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Post Data": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Directories": {
+      "main": [
+        [
+          {
+            "node": "Save Post Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Load Scheduled Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Scheduled Posts": {
+      "main": [
+        [
+          {
+            "node": "Find Due Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Due Posts": {
+      "main": [
+        [
+          {
+            "node": "Any Due Posts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Due Posts?": {
+      "main": [
+        [
+          {
+            "node": "Split Posts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Split Posts": {
+      "main": [
+        [
+          {
+            "node": "Process Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Post": {
+      "main": [
+        [
+          {
+            "node": "Post to Twitter?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Twitter?": {
+      "main": [
+        [
+          {
+            "node": "Post to Twitter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to LinkedIn?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Twitter": {
+      "main": [
+        [
+          {
+            "node": "Post to LinkedIn?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to LinkedIn?": {
+      "main": [
+        [
+          {
+            "node": "Post to LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to Facebook?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Post to Facebook?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Facebook?": {
+      "main": [
+        [
+          {
+            "node": "Post to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post to Instagram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Facebook": {
+      "main": [
+        [
+          {
+            "node": "Post to Instagram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Instagram?": {
+      "main": [
+        [
+          {
+            "node": "Post to Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark as Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Instagram": {
+      "main": [
+        [
+          {
+            "node": "Mark as Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Published": {
+      "main": [
+        [
+          {
+            "node": "Log Publishing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "10",
+  "id": "10",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

@@ -1,0 +1,385 @@
+{
+  "name": "Automated Email Response System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 5
+            }
+          ]
+        },
+        "options": {
+          "onlyUnread": true,
+          "download": false,
+          "limit": 10
+        }
+      },
+      "name": "Check Emails",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "credentials": {
+        "imap": {
+          "name": "Email IMAP",
+          "host": "imap.example.com",
+          "port": 993,
+          "user": "your-email@example.com",
+          "password": "your-password",
+          "ssl": true
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "name": "Split Emails",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract email details\nconst email = {\n  messageId: $input.item.json.messageId,\n  from: $input.item.json.from,\n  to: $input.item.json.to,\n  cc: $input.item.json.cc,\n  subject: $input.item.json.subject,\n  text: $input.item.json.text,\n  html: $input.item.json.html,\n  date: $input.item.json.date\n};\n\n// Extract sender information\nconst fromMatch = email.from.match(/([^<]+)<([^>]+)>/i);\nconst senderName = fromMatch ? fromMatch[1].trim() : email.from;\nconst senderEmail = fromMatch ? fromMatch[2].trim() : email.from;\n\n// Clean up the email text\nconst cleanText = email.text\n  .replace(/\\r\\n/g, '\\n')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nreturn {\n  ...email,\n  senderName,\n  senderEmail,\n  cleanText,\n  receivedTimestamp: new Date().toISOString()\n};"
+      },
+      "name": "Process Email",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "chat",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an AI email assistant that helps categorize and analyze incoming emails. Your task is to analyze the email content and determine the category, priority, and whether an automated response is appropriate. Be precise and concise in your analysis."
+            },
+            {
+              "role": "user",
+              "content": "=Analyze the following email:\n\nFrom: {{ $json.senderName }} <{{ $json.senderEmail }}>\nSubject: {{ $json.subject }}\nDate: {{ $json.date }}\n\nEmail Content:\n{{ $json.cleanText }}\n\nPlease provide the following information in JSON format:\n1. Category: Determine the email category (Support, Sales, Information, Partnership, Job Application, Spam, Other)\n2. Priority: Assign a priority level (High, Medium, Low)\n3. Intent: Identify the primary intent of the email (Question, Request, Complaint, Feedback, Information)\n4. Keywords: Extract 3-5 key topics or keywords from the email\n5. Sentiment: Analyze the sentiment (Positive, Neutral, Negative)\n6. AutoRespond: Boolean indicating if this email can be handled with an automated response\n7. ResponseType: If AutoRespond is true, suggest a response type (Support Ticket, FAQ, Thank You, Request More Info, Out of Office, Not Available)\n8. Summary: Provide a brief 1-2 sentence summary of the email"
+            }
+          ]
+        },
+        "options": {
+          "responseFormat": {
+            "type": "json_object"
+          }
+        }
+      },
+      "name": "Analyze Email",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "name": "OpenAI",
+          "apiKey": "YOUR_OPENAI_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse the AI analysis\nlet analysis;\ntry {\n  analysis = JSON.parse($input.item.json.message.content);\n} catch (error) {\n  // If parsing fails, try to extract JSON from the response\n  const match = $input.item.json.message.content.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    try {\n      analysis = JSON.parse(match[0]);\n    } catch (e) {\n      analysis = {\n        Category: \"Other\",\n        Priority: \"Medium\",\n        Intent: \"Unknown\",\n        Keywords: [\"unknown\"],\n        Sentiment: \"Neutral\",\n        AutoRespond: false,\n        ResponseType: null,\n        Summary: \"Could not analyze email content\"\n      };\n    }\n  } else {\n    analysis = {\n      Category: \"Other\",\n      Priority: \"Medium\",\n      Intent: \"Unknown\",\n      Keywords: [\"unknown\"],\n      Sentiment: \"Neutral\",\n      AutoRespond: false,\n      ResponseType: null,\n      Summary: \"Could not analyze email content\"\n    };\n  }\n}\n\n// Combine email data with analysis\nreturn {\n  ...$input.item.json,\n  analysis: {\n    category: analysis.Category || analysis.category,\n    priority: analysis.Priority || analysis.priority,\n    intent: analysis.Intent || analysis.intent,\n    keywords: analysis.Keywords || analysis.keywords,\n    sentiment: analysis.Sentiment || analysis.sentiment,\n    autoRespond: analysis.AutoRespond || analysis.autoRespond,\n    responseType: analysis.ResponseType || analysis.responseType,\n    summary: analysis.Summary || analysis.summary\n  },\n  processedTimestamp: new Date().toISOString()\n};"
+      },
+      "name": "Process Analysis",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.analysis.autoRespond }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Can Auto-Respond?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "chat",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an AI email assistant that creates professional, helpful, and friendly automated email responses. Your responses should be concise but complete, addressing the sender's needs while setting appropriate expectations."
+            },
+            {
+              "role": "user",
+              "content": "=Create an automated email response for the following email:\n\nFrom: {{ $json.senderName }} <{{ $json.senderEmail }}>\nSubject: {{ $json.subject }}\nEmail Content: {{ $json.cleanText }}\n\nEmail Analysis:\n- Category: {{ $json.analysis.category }}\n- Priority: {{ $json.analysis.priority }}\n- Intent: {{ $json.analysis.intent }}\n- Response Type: {{ $json.analysis.responseType }}\n- Summary: {{ $json.analysis.summary }}\n\nPlease create a professional and helpful response that:\n1. Acknowledges receipt of their email\n2. Addresses their specific inquiry or issue\n3. Provides next steps or expectations\n4. Includes a friendly closing\n\nThe response should be in HTML format with appropriate formatting."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Generate Response",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        200
+      ],
+      "credentials": {
+        "openAiApi": {
+          "name": "OpenAI",
+          "apiKey": "YOUR_OPENAI_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract the AI-generated response\nconst responseHtml = $input.item.json.message.content;\n\n// Create a clean text version by removing HTML tags\nconst responseText = responseHtml.replace(/<[^>]*>/g, '');\n\nreturn {\n  ...$input.item.json,\n  response: {\n    html: responseHtml,\n    text: responseText\n  }\n};"
+      },
+      "name": "Format Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "support@yourcompany.com",
+        "toEmail": "={{ $json.senderEmail }}",
+        "subject": "=Re: {{ $json.subject }}",
+        "text": "={{ $json.response.text }}",
+        "html": "={{ $json.response.html }}",
+        "options": {
+          "ccEmail": "",
+          "bccEmail": "email-records@yourcompany.com"
+        }
+      },
+      "name": "Send Response",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        200
+      ],
+      "credentials": {
+        "smtp": {
+          "name": "Email SMTP",
+          "host": "smtp.example.com",
+          "port": 587,
+          "user": "your-email@example.com",
+          "password": "your-password",
+          "ssl": false,
+          "starttls": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "resource": "ticket",
+        "additionalFields": {
+          "subject": "={{ $json.subject }}",
+          "comment": "={{ $json.cleanText }}",
+          "priority": "={{ $json.analysis.priority.toLowerCase() }}",
+          "tags": "={{ $json.analysis.keywords }}",
+          "type": "question"
+        }
+      },
+      "name": "Create Ticket",
+      "type": "n8n-nodes-base.zendesk",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        400
+      ],
+      "credentials": {
+        "zendeskApi": {
+          "name": "Zendesk API",
+          "subdomain": "your-subdomain",
+          "email": "your-email@example.com",
+          "apiToken": "YOUR_ZENDESK_API_TOKEN"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "messageId": "={{ $json.messageId }}",
+        "options": {
+          "markSeen": true
+        }
+      },
+      "name": "Mark Email as Read",
+      "type": "n8n-nodes-base.emailImap",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        400
+      ],
+      "credentials": {
+        "imap": {
+          "name": "Email IMAP",
+          "host": "imap.example.com",
+          "port": 993,
+          "user": "your-email@example.com",
+          "password": "your-password",
+          "ssl": true
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Check Emails": {
+      "main": [
+        [
+          {
+            "node": "Split Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Emails": {
+      "main": [
+        [
+          {
+            "node": "Process Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Email": {
+      "main": [
+        [
+          {
+            "node": "Analyze Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Email": {
+      "main": [
+        [
+          {
+            "node": "Process Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Analysis": {
+      "main": [
+        [
+          {
+            "node": "Can Auto-Respond?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Can Auto-Respond?": {
+      "main": [
+        [
+          {
+            "node": "Generate Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Response": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Response": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Ticket": {
+      "main": [
+        [
+          {
+            "node": "Mark Email as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Response": {
+      "main": [
+        [
+          {
+            "node": "Mark Email as Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "5",
+  "id": "5",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

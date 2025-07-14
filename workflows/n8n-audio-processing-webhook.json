@@ -1,0 +1,45 @@
+{
+  "name": "Audio Processing via Agent Run",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "audio-processing"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.VERCEL_API_URL }}/api/agent-run",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "{\"task\": \"audio_transcribe\", \"model\": \"qwen2_audio_q4\", \"audio_url\": \"{{$json[\"audio_url\"]}}\"}"
+      },
+      "id": "2",
+      "name": "Audio Processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Audio Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["webhook", "audio", "monetizable"]
+}

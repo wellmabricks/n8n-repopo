@@ -1,0 +1,444 @@
+{
+  "name": "Automated File Processing Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "path": "/path/to/input/directory"
+      },
+      "name": "List Files",
+      "type": "n8n-nodes-base.filesLister",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the list of files\nconst files = $input.item.json.files || [];\n\n// Filter for new files only (using a naming convention for processed files)\nconst newFiles = files.filter(file => {\n  // Skip files that start with 'processed_'\n  if (file.name.startsWith('processed_')) {\n    return false;\n  }\n  \n  // Skip directories\n  if (file.directory) {\n    return false;\n  }\n  \n  return true;\n});\n\n// Categorize files by type\nreturn newFiles.map(file => {\n  // Get file extension\n  const extension = file.name.split('.').pop().toLowerCase();\n  \n  // Determine file type\n  let fileType = 'other';\n  \n  // Image files\n  if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp', 'svg'].includes(extension)) {\n    fileType = 'image';\n  }\n  // Document files\n  else if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'md'].includes(extension)) {\n    fileType = 'document';\n  }\n  // Data files\n  else if (['csv', 'xls', 'xlsx', 'json', 'xml', 'yaml', 'yml'].includes(extension)) {\n    fileType = 'data';\n  }\n  // Video files\n  else if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'].includes(extension)) {\n    fileType = 'video';\n  }\n  // Audio files\n  else if (['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac'].includes(extension)) {\n    fileType = 'audio';\n  }\n  \n  return {\n    ...file,\n    fileType,\n    extension,\n    inputPath: file.path,\n    outputPath: `/path/to/output/${fileType}/${file.name}`,\n    processedPath: `/path/to/input/directory/processed_${file.name}`,\n    processingTimestamp: new Date().toISOString()\n  };\n});"
+      },
+      "name": "Filter and Categorize",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Split Files",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.fileType }}",
+              "operation": "equals",
+              "value2": "image"
+            }
+          ]
+        }
+      },
+      "name": "Is Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "resize",
+        "filePath": "={{ $json.inputPath }}",
+        "options": {
+          "quality": 80,
+          "format": "={{ $json.extension }}",
+          "width": 1200,
+          "height": 1200,
+          "fit": "inside"
+        },
+        "outputFile": "={{ $json.outputPath }}"
+      },
+      "name": "Process Image",
+      "type": "n8n-nodes-base.imageManipulation",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.fileType }}",
+              "operation": "equals",
+              "value2": "document"
+            }
+          ]
+        }
+      },
+      "name": "Is Document?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.inputPath }}",
+        "options": {}
+      },
+      "name": "Read Document",
+      "type": "n8n-nodes-base.readPDF",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.outputPath }}",
+        "fileName": "={{ $json.name.split('.')[0] }}_extracted.txt",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "name": "Save Extracted Text",
+      "type": "n8n-nodes-base.writeTextFile",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.fileType }}",
+              "operation": "equals",
+              "value2": "data"
+            }
+          ]
+        }
+      },
+      "name": "Is Data File?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.inputPath }}",
+        "options": {}
+      },
+      "name": "Read CSV",
+      "type": "n8n-nodes-base.readCsv",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process the CSV data\nconst data = $input.item.json.data || [];\n\n// Simple data analysis\nconst analysis = {\n  rowCount: data.length,\n  columnCount: data.length > 0 ? Object.keys(data[0]).length : 0,\n  columns: data.length > 0 ? Object.keys(data[0]) : [],\n  summary: {}\n};\n\n// Generate summary statistics for numeric columns\nif (data.length > 0) {\n  for (const column of analysis.columns) {\n    // Check if column contains numeric data\n    const numericValues = data\n      .map(row => parseFloat(row[column]))\n      .filter(val => !isNaN(val));\n    \n    if (numericValues.length > 0) {\n      // Calculate basic statistics\n      const sum = numericValues.reduce((a, b) => a + b, 0);\n      const mean = sum / numericValues.length;\n      const min = Math.min(...numericValues);\n      const max = Math.max(...numericValues);\n      \n      analysis.summary[column] = {\n        type: 'numeric',\n        count: numericValues.length,\n        mean,\n        min,\n        max,\n        sum\n      };\n    } else {\n      // For non-numeric columns, count unique values\n      const uniqueValues = new Set(data.map(row => row[column]));\n      \n      analysis.summary[column] = {\n        type: 'categorical',\n        count: data.length,\n        uniqueCount: uniqueValues.size\n      };\n    }\n  }\n}\n\nreturn {\n  ...$input.item.json,\n  data,\n  analysis\n};"
+      },
+      "name": "Analyze Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.outputPath }}",
+        "fileName": "={{ $json.name.split('.')[0] }}_analysis.json",
+        "text": "={{ JSON.stringify($json.analysis, null, 2) }}",
+        "options": {}
+      },
+      "name": "Save Analysis",
+      "type": "n8n-nodes-base.writeTextFile",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "sourcePath": "={{ $json.inputPath }}",
+        "destinationPath": "={{ $json.processedPath }}"
+      },
+      "name": "Mark as Processed",
+      "type": "n8n-nodes-base.moveFiles",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "sheetId": "YOUR_SHEET_ID",
+        "range": "A:Z",
+        "options": {
+          "valueInputMode": "RAW"
+        },
+        "valueInputOption": "USER_ENTERED",
+        "valueRenderOption": "UNFORMATTED_VALUE",
+        "data": {
+          "values": [
+            [
+              "={{ $json.processingTimestamp }}",
+              "={{ $json.name }}",
+              "={{ $json.fileType }}",
+              "={{ $json.extension }}",
+              "={{ $json.size }}",
+              "={{ $json.outputPath }}"
+            ]
+          ]
+        }
+      },
+      "name": "Log Processing",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 3,
+      "position": [
+        2450,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "name": "Google Sheets OAuth2",
+          "oauthTokenData": {}
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "List Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Files": {
+      "main": [
+        [
+          {
+            "node": "Filter and Categorize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter and Categorize": {
+      "main": [
+        [
+          {
+            "node": "Split Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Files": {
+      "main": [
+        [
+          {
+            "node": "Is Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Image?": {
+      "main": [
+        [
+          {
+            "node": "Process Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Document?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Image": {
+      "main": [
+        [
+          {
+            "node": "Mark as Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Document?": {
+      "main": [
+        [
+          {
+            "node": "Read Document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Data File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Document": {
+      "main": [
+        [
+          {
+            "node": "Save Extracted Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Extracted Text": {
+      "main": [
+        [
+          {
+            "node": "Mark as Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Data File?": {
+      "main": [
+        [
+          {
+            "node": "Read CSV",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark as Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CSV": {
+      "main": [
+        [
+          {
+            "node": "Analyze Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Data": {
+      "main": [
+        [
+          {
+            "node": "Save Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Analysis": {
+      "main": [
+        [
+          {
+            "node": "Mark as Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark as Processed": {
+      "main": [
+        [
+          {
+            "node": "Log Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "8",
+  "id": "8",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

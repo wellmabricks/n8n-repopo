@@ -1,0 +1,278 @@
+{
+  "name": "Content Distribution Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "distribute-content",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse the incoming content data\nconst contentId = $input.item(0).json.content_id;\nconst platforms = $input.item(0).json.platforms || ['twitter', 'facebook', 'linkedin'];\nconst scheduleTime = $input.item(0).json.schedule_time;\n\n// Format the data for the distribution process\nreturn {\n  content_id: contentId,\n  platforms,\n  schedule_time: scheduleTime,\n  // If no specific time provided, calculate optimal posting times\n  optimal_times: {\n    twitter: scheduleTime || '12:00',\n    facebook: scheduleTime || '15:00',\n    linkedin: scheduleTime || '09:00',\n    instagram: scheduleTime || '18:00'\n  }\n};"
+      },
+      "name": "Prepare Distribution Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ !!$json.schedule_time }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Schedule Posts?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/publish",
+        "options": {},
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content_id",
+              "value": "={{ $json.content_id }}"
+            },
+            {
+              "name": "platforms",
+              "value": "={{ $json.platforms }}"
+            }
+          ]
+        }
+      },
+      "name": "Publish Now",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        850,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "publishing_status",
+              "stringValue": "Scheduled for {{ $json.schedule_time }}"
+            }
+          ]
+        },
+        "include": "all",
+        "options": {}
+      },
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "custom",
+              "cronExpression": "={{ \"0 \" + $json.schedule_time.split(\":\")[1] + \" \" + $json.schedule_time.split(\":\")[0] + \" * * *\" }}"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Post Time",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        850,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "webhook_data",
+              "stringValue": "={{ $json }}"
+            }
+          ]
+        },
+        "include": "all",
+        "options": {}
+      },
+      "name": "Store Schedule Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        850,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.webhook_data }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Has Webhook Data?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/publish",
+        "options": {},
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content_id",
+              "value": "={{ $json.webhook_data.content_id }}"
+            },
+            {
+              "name": "platforms",
+              "value": "={{ $json.webhook_data.platforms }}"
+            }
+          ]
+        }
+      },
+      "name": "Execute Scheduled Publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Distribution Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Distribution Data": {
+      "main": [
+        [
+          {
+            "node": "Schedule Posts?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Posts?": {
+      "main": [
+        [
+          {
+            "node": "Publish Now",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Schedule Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish Now": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Post Time": {
+      "main": [
+        [
+          {
+            "node": "Has Webhook Data?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Schedule Data": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Webhook Data?": {
+      "main": [
+        [
+          {
+            "node": "Execute Scheduled Publish",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "a77c9d4a-8f11-4a02-b3a1-3378b4067b93",
+  "id": "3",
+  "meta": {
+    "instanceId": "5d3c8d8b578e479f2a3f70b2f4b0eff6c35811fa440a1f9a1c5b08cb88a79d89"
+  },
+  "tags": []
+}

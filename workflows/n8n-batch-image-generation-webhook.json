@@ -1,0 +1,45 @@
+{
+  "name": "Batch Image Generation via Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "batch-generate-images"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.VERCEL_API_URL }}/api/generate-image",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "{\"prompt\": \"{{$json[\"prompt\"]}}\", \"num_images\": 5}"
+      },
+      "id": "2",
+      "name": "Batch Generate Images",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Batch Generate Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["webhook", "batch", "image", "monetizable"]
+}

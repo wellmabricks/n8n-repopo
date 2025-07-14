@@ -1,0 +1,169 @@
+{
+  "name": "Comprehensive Agent Endpoints Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-workflow-trigger"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.CLOUDFLARE_WORKER_URL }}/agent/run",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "{\"task\": \"example_task\", \"params\": {}}",
+        "headerParametersJson": "{\"Authorization\": \"Bearer {{$env.CLOUDFLARE_API_KEY}}\"}"
+      },
+      "id": "2",
+      "name": "Run Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.CLOUDFLARE_WORKER_URL }}/agent/status?session_id={{$json[\"session_id\"]}}",
+        "method": "GET",
+        "headerParametersJson": "{\"Authorization\": \"Bearer {{$env.CLOUDFLARE_API_KEY}}\"}"
+      },
+      "id": "3",
+      "name": "Check Agent Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.CLOUDFLARE_WORKER_URL }}/agent/health",
+        "method": "GET"
+      },
+      "id": "4",
+      "name": "Health Check",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [960, 200]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.CLOUDFLARE_WORKER_URL }}/agent/tools",
+        "method": "GET"
+      },
+      "id": "5",
+      "name": "List Tools",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.CLOUDFLARE_WORKER_URL }}/agent/models",
+        "method": "GET"
+      },
+      "id": "6",
+      "name": "List Models",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [960, 400]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.CLOUDFLARE_WORKER_URL }}/agent/sessions",
+        "method": "GET",
+        "headerParametersJson": "{\"Authorization\": \"Bearer {{$env.CLOUDFLARE_API_KEY}}\"}"
+      },
+      "id": "7",
+      "name": "List Sessions",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.CLOUDFLARE_WORKER_URL }}/agent/metrics",
+        "method": "GET"
+      },
+      "id": "8",
+      "name": "Get Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [1200, 400]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Agent": {
+      "main": [
+        [
+          {
+            "node": "Check Agent Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Agent Status": {
+      "main": [
+        [
+          {
+            "node": "List Tools",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Health Check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "List Models",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Tools": {
+      "main": [
+        [
+          {
+            "node": "List Sessions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Models": {
+      "main": [
+        [
+          {
+            "node": "Get Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["agent", "automation", "comprehensive"]
+}

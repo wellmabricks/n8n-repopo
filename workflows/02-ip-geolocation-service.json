@@ -1,0 +1,123 @@
+{
+  "name": "IP Geolocation Webhook Service",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "ip-lookup",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the IP address from the query parameter or use the requester's IP\nconst ip = $input.item.json.query.ip || $input.item.json.headers['x-forwarded-for'] || $input.item.json.headers['x-real-ip'] || '8.8.8.8';\n\n// Validate IP format (simple validation)\nconst ipRegex = /^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$/;\nif (!ipRegex.test(ip)) {\n  return {\n    error: \"Invalid IP address format\",\n    providedIp: ip\n  };\n}\n\nreturn {\n  ip\n};"
+      },
+      "name": "Process IP",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://ipapi.co/{{ $json.ip }}/json/",
+        "options": {}
+      },
+      "name": "Lookup IP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Enhance the response with additional information\nconst data = $input.item.json;\n\n// Add a formatted location string\nif (data.city && data.country_name) {\n  data.formatted_location = `${data.city}, ${data.region || ''} ${data.country_name}`;\n}\n\n// Add Google Maps link\nif (data.latitude && data.longitude) {\n  data.maps_url = `https://www.google.com/maps?q=${data.latitude},${data.longitude}`;\n}\n\n// Add timezone information with current time\nif (data.timezone) {\n  try {\n    const options = { timeZone: data.timezone, timeZoneName: 'short' };\n    data.current_time = new Date().toLocaleString('en-US', options);\n  } catch (e) {\n    // Timezone might not be supported\n    data.current_time = 'Unknown';\n  }\n}\n\n// Add ISP information if available\nif (data.org) {\n  data.isp = data.org;\n}\n\nreturn data;"
+      },
+      "name": "Enhance Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process IP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process IP": {
+      "main": [
+        [
+          {
+            "node": "Lookup IP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup IP": {
+      "main": [
+        [
+          {
+            "node": "Enhance Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enhance Data": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "2",
+  "id": "2",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

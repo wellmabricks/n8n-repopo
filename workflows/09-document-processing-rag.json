@@ -1,0 +1,558 @@
+{
+  "name": "Document Processing RAG System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-document",
+        "options": {}
+      },
+      "name": "Document Upload Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the uploaded file information\nconst fileData = $input.item.json.body?.fileData;\n\nif (!fileData) {\n  return {\n    error: \"No file data provided\",\n    success: false\n  };\n}\n\n// Generate a unique ID for this document\nconst documentId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;\n\n// Get the file name and content type\nconst fileName = fileData.fileName || 'unknown_file';\nconst mimeType = fileData.mimeType || 'application/octet-stream';\n\n// Determine file type from mime type or extension\nconst extension = fileName.split('.').pop().toLowerCase();\nlet fileType = 'unknown';\n\nif (mimeType.includes('pdf') || extension === 'pdf') {\n  fileType = 'pdf';\n} else if (mimeType.includes('word') || ['doc', 'docx'].includes(extension)) {\n  fileType = 'word';\n} else if (mimeType.includes('text') || ['txt', 'md', 'rtf'].includes(extension)) {\n  fileType = 'text';\n} else if (['csv', 'xls', 'xlsx'].includes(extension)) {\n  fileType = 'spreadsheet';\n}\n\n// Set up file paths\nconst workingDir = '/tmp/rag-system';\nconst originalFilePath = `${workingDir}/original/${documentId}_${fileName}`;\nconst textFilePath = `${workingDir}/text/${documentId}.txt`;\n\n// Return the document metadata\nreturn {\n  documentId,\n  fileName,\n  fileType,\n  mimeType,\n  originalFilePath,\n  textFilePath,\n  uploadTimestamp: new Date().toISOString(),\n  fileData,\n  success: true\n};"
+      },
+      "name": "Process Upload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.success }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Valid Upload?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=mkdir -p /tmp/rag-system/original /tmp/rag-system/text /tmp/rag-system/chunks /tmp/rag-system/embeddings",
+        "workingDirectory": "/tmp"
+      },
+      "name": "Create Directories",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        910,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.originalFilePath }}",
+        "fileName": "={{ $json.fileName }}",
+        "options": {
+          "binaryData": "={{ $json.fileData.data }}"
+        }
+      },
+      "name": "Save Original File",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.fileType }}",
+              "operation": "equals",
+              "value2": "pdf"
+            }
+          ]
+        }
+      },
+      "name": "Is PDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.originalFilePath }}",
+        "options": {}
+      },
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.readPDF",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.fileType }}",
+              "operation": "equals",
+              "value2": "word"
+            }
+          ]
+        }
+      },
+      "name": "Is Word?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=python3 -c \"import docx2txt; text = docx2txt.process('{{ $json.originalFilePath }}'); print(text)\" > {{ $json.textFilePath }}",
+        "workingDirectory": "/tmp"
+      },
+      "name": "Extract Word Text",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.textFilePath }}",
+        "fileName": "={{ $json.documentId }}.txt",
+        "text": "={{ $json.text }}",
+        "options": {}
+      },
+      "name": "Save PDF Text",
+      "type": "n8n-nodes-base.writeTextFile",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.fileType }}",
+              "operation": "equals",
+              "value2": "text"
+            }
+          ]
+        }
+      },
+      "name": "Is Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1790,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=cat {{ $json.originalFilePath }} > {{ $json.textFilePath }}",
+        "workingDirectory": "/tmp"
+      },
+      "name": "Copy Text File",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=python3 -c \"import pandas as pd; df = pd.read_csv('{{ $json.originalFilePath }}'); print(df.to_string())\" > {{ $json.textFilePath }}",
+        "workingDirectory": "/tmp"
+      },
+      "name": "Extract Spreadsheet Text",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2010,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=python3 -c \"\nimport os\nimport json\n\n# Read the text file\nwith open('{{ $json.textFilePath }}', 'r') as f:\n    text = f.read()\n\n# Split into chunks of approximately 1000 characters\nchunk_size = 1000\nchunks = []\nfor i in range(0, len(text), chunk_size):\n    chunk = text[i:i+chunk_size]\n    # Try to break at paragraph or sentence\n    if i + chunk_size < len(text):\n        # Look for paragraph break\n        para_break = chunk.rfind('\\n\\n')\n        if para_break > chunk_size * 0.5:  # If paragraph break is reasonably far in\n            chunk = chunk[:para_break]\n        else:  # Look for sentence break\n            sentence_break = max(chunk.rfind('. '), chunk.rfind('! '), chunk.rfind('? '))\n            if sentence_break > chunk_size * 0.5:  # If sentence break is reasonably far in\n                chunk = chunk[:sentence_break+1]\n    \n    # Add chunk with metadata\n    chunks.append({\n        'chunk_id': f'{{ $json.documentId }}_chunk_{len(chunks)}',\n        'document_id': '{{ $json.documentId }}',\n        'text': chunk.strip(),\n        'position': len(chunks),\n        'char_start': i,\n        'char_end': i + len(chunk)\n    })\n\n# Write chunks to file\nchunks_file = '/tmp/rag-system/chunks/{{ $json.documentId }}_chunks.json'\nwith open(chunks_file, 'w') as f:\n    json.dump(chunks, f)\n\nprint(json.dumps({'chunk_count': len(chunks), 'chunks_file': chunks_file}))\n\"",
+        "workingDirectory": "/tmp"
+      },
+      "name": "Chunk Text",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        2230,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse the chunking result\nlet chunkingResult;\ntry {\n  const output = $input.item.json.stdout;\n  chunkingResult = JSON.parse(output);\n} catch (error) {\n  chunkingResult = {\n    chunk_count: 0,\n    chunks_file: '',\n    error: 'Failed to parse chunking result'\n  };\n}\n\n// Read the chunks file\nlet chunks = [];\ntry {\n  const fs = require('fs');\n  const chunksData = fs.readFileSync(chunkingResult.chunks_file, 'utf8');\n  chunks = JSON.parse(chunksData);\n} catch (error) {\n  chunks = [];\n}\n\nreturn {\n  ...$input.item.json,\n  chunking: chunkingResult,\n  chunks,\n  processingStep: 'chunking_complete'\n};"
+      },
+      "name": "Process Chunks",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "resource": "embedding",
+        "text": "={{ $json.chunks.map(chunk => chunk.text).join('\\n\\n') }}",
+        "options": {
+          "model": "text-embedding-ada-002"
+        }
+      },
+      "name": "Generate Embeddings",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [
+        2670,
+        300
+      ],
+      "credentials": {
+        "openAiApi": {
+          "name": "OpenAI",
+          "apiKey": "YOUR_OPENAI_API_KEY"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Combine chunks with embeddings\nconst chunks = $input.item.json.chunks;\nconst embeddings = $input.item.json.data;\n\n// Ensure we have embeddings for each chunk\nif (!embeddings || !embeddings.length || chunks.length !== embeddings.length) {\n  return {\n    ...$input.item.json,\n    error: 'Embedding count does not match chunk count',\n    processingStep: 'embedding_failed'\n  };\n}\n\n// Combine chunks with their embeddings\nconst chunksWithEmbeddings = chunks.map((chunk, index) => ({\n  ...chunk,\n  embedding: embeddings[index].embedding\n}));\n\n// Prepare data for vector database\nconst vectorData = {\n  document_id: $input.item.json.documentId,\n  file_name: $input.item.json.fileName,\n  upload_timestamp: $input.item.json.uploadTimestamp,\n  chunks: chunksWithEmbeddings\n};\n\n// Write the vector data to a file\nconst fs = require('fs');\nconst vectorFilePath = `/tmp/rag-system/embeddings/${$input.item.json.documentId}_vectors.json`;\nfs.writeFileSync(vectorFilePath, JSON.stringify(vectorData, null, 2));\n\nreturn {\n  ...$input.item.json,\n  vectorFilePath,\n  chunksWithEmbeddings: chunksWithEmbeddings.length,\n  processingStep: 'embeddings_complete'\n};"
+      },
+      "name": "Process Embeddings",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2890,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/documents",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "document_id",
+              "value": "={{ $json.documentId }}"
+            },
+            {
+              "name": "file_name",
+              "value": "={{ $json.fileName }}"
+            },
+            {
+              "name": "vector_file_path",
+              "value": "={{ $json.vectorFilePath }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Register with Vector DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        3110,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        3330,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        910,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Document Upload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Upload": {
+      "main": [
+        [
+          {
+            "node": "Valid Upload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Upload?": {
+      "main": [
+        [
+          {
+            "node": "Create Directories",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Directories": {
+      "main": [
+        [
+          {
+            "node": "Save Original File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Original File": {
+      "main": [
+        [
+          {
+            "node": "Is PDF?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is PDF?": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Word?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Save PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Word?": {
+      "main": [
+        [
+          {
+            "node": "Extract Word Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Word Text": {
+      "main": [
+        [
+          {
+            "node": "Chunk Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Chunk Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Text?": {
+      "main": [
+        [
+          {
+            "node": "Copy Text File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Spreadsheet Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy Text File": {
+      "main": [
+        [
+          {
+            "node": "Chunk Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Spreadsheet Text": {
+      "main": [
+        [
+          {
+            "node": "Chunk Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk Text": {
+      "main": [
+        [
+          {
+            "node": "Process Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Chunks": {
+      "main": [
+        [
+          {
+            "node": "Generate Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Embeddings": {
+      "main": [
+        [
+          {
+            "node": "Process Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Embeddings": {
+      "main": [
+        [
+          {
+            "node": "Register with Vector DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Register with Vector DB": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "9",
+  "id": "9",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+

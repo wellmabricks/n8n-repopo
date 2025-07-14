@@ -1,0 +1,45 @@
+{
+  "name": "Agent Run with Outbound Callback",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-run-callback"
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "{{ $env.VERCEL_API_URL }}/api/agent-run",
+        "method": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "{\"task\": \"{{$json[\"task\"]}}\", \"callback_url\": \"{{$json[\"callback_url\"]}}\"}"
+      },
+      "id": "2",
+      "name": "Run Agent with Callback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [480, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run Agent with Callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tags": ["webhook", "agent", "callback", "monetizable"]
+}

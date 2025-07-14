@@ -1,0 +1,229 @@
+{
+  "name": "Content Discovery Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "minutesAndSeconds": {
+                "seconds": 0,
+                "minutes": 0
+              },
+              "triggerAtHours": [
+                8
+              ]
+            }
+          ]
+        }
+      },
+      "name": "Schedule",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines",
+        "authentication": "headerAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{$env.NEWS_API_KEY}}"
+            }
+          ]
+        },
+        "options": {},
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "country",
+              "value": "us"
+            },
+            {
+              "name": "pageSize",
+              "value": "20"
+            },
+            {
+              "name": "category",
+              "value": "technology"
+            }
+          ]
+        }
+      },
+      "name": "Fetch Tech News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        450,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines",
+        "authentication": "headerAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "={{$env.NEWS_API_KEY}}"
+            }
+          ]
+        },
+        "options": {},
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "country",
+              "value": "us"
+            },
+            {
+              "name": "pageSize",
+              "value": "20"
+            },
+            {
+              "name": "category",
+              "value": "business"
+            }
+          ]
+        }
+      },
+      "name": "Fetch Business News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        450,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine and filter news from both sources\nconst techNews = $input.item(0).json.articles || [];\nconst businessNews = $input.item(1).json.articles || [];\n\n// Combine all news articles\nlet allArticles = [...techNews, ...businessNews];\n\n// Filter out articles with no content or title\nallArticles = allArticles.filter(article => {\n  return article.title && article.url && \n         article.title.length > 10 && \n         !article.title.includes('[Removed]');\n});\n\n// Remove duplicates (based on URL)\nconst uniqueUrls = new Set();\nallArticles = allArticles.filter(article => {\n  if (uniqueUrls.has(article.url)) {\n    return false;\n  }\n  uniqueUrls.add(article.url);\n  return true;\n});\n\n// Sort by publishedAt (newest first)\nallArticles.sort((a, b) => {\n  return new Date(b.publishedAt) - new Date(a.publishedAt);\n});\n\n// Take top 10 articles\nconst topArticles = allArticles.slice(0, 10);\n\n// Return filtered and formatted articles\nreturn topArticles.map(article => {\n  return {\n    title: article.title,\n    url: article.url,\n    source: article.source.name,\n    published_at: article.publishedAt,\n    content_type: \"news\"\n  };\n});"
+      },
+      "name": "Filter & Format Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Process Articles",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/scrape",
+        "options": {},
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.url }}"
+            },
+            {
+              "name": "use_modal",
+              "value": true
+            }
+          ]
+        }
+      },
+      "name": "Send to Scraper API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Fetch Tech News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Business News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Tech News": {
+      "main": [
+        [
+          {
+            "node": "Filter & Format Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Business News": {
+      "main": [
+        [
+          {
+            "node": "Filter & Format Content",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Filter & Format Content": {
+      "main": [
+        [
+          {
+            "node": "Process Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Articles": {
+      "main": [
+        [
+          {
+            "node": "Send to Scraper API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "e37a1f22-db68-4c02-91a0-3fe0e3ad7cee",
+  "id": "1",
+  "meta": {
+    "instanceId": "5d3c8d8b578e479f2a3f70b2f4b0eff6c35811fa440a1f9a1c5b08cb88a79d89"
+  },
+  "tags": []
+}

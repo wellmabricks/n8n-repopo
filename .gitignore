@@ -1,0 +1,29 @@
+# Environment files with secrets
+.env
+.env.*.local
+
+# Operating system files
+.DS_Store
+Thumbs.db
+*.log
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+build/
+
+# Backup directories
+n8n_backup_*/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp

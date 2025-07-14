@@ -1,0 +1,137 @@
+{
+  "name": "Image Generation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-image",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.starryai.com/api/v1/create",
+        "authentication": "headerAuth",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$env.STARRYAI_API_KEY}}"
+            }
+          ]
+        },
+        "options": {},
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.body.prompt }}"
+            },
+            {
+              "name": "style",
+              "value": "={{ $json.body.style || 'realistic' }}"
+            },
+            {
+              "name": "height",
+              "value": 512
+            },
+            {
+              "name": "width",
+              "value": 512
+            }
+          ]
+        }
+      },
+      "name": "Generate Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5000/api/store_image",
+        "options": {},
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.output.images[0] }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.body.prompt }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ {\n  \"style\": $json.body.style || \"realistic\",\n  \"source\": \"starryai\"\n} }}"
+            }
+          ]
+        }
+      },
+      "name": "Store Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Store Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "b981ed79-98e5-4bf1-8fa9-3989a4067b93",
+  "id": "1",
+  "meta": {
+    "instanceId": "5d3c8d8b578e479f2a3f70b2f4b0eff6c35811fa440a1f9a1c5b08cb88a79d89"
+  },
+  "tags": []
+}

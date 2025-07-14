@@ -1,0 +1,216 @@
+{
+  "name": "Website Monitoring and Alert System",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define the websites to monitor\nreturn [\n  {\n    \"name\": \"Example Website\",\n    \"url\": \"https://example.com\",\n    \"expectedStatusCode\": 200,\n    \"expectedKeyword\": \"Example Domain\",\n    \"maxResponseTime\": 2000 // milliseconds\n  },\n  {\n    \"name\": \"Google\",\n    \"url\": \"https://www.google.com\",\n    \"expectedStatusCode\": 200,\n    \"expectedKeyword\": \"Google\",\n    \"maxResponseTime\": 1500 // milliseconds\n  },\n  {\n    \"name\": \"GitHub\",\n    \"url\": \"https://github.com\",\n    \"expectedStatusCode\": 200,\n    \"expectedKeyword\": \"GitHub\",\n    \"maxResponseTime\": 2000 // milliseconds\n  }\n];"
+      },
+      "name": "Website List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Split Websites",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 5
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "name": "Check Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Get the start time from the metadata\nconst startTime = $input.item.json.requestOptions?.startTimestamp || Date.now();\nconst endTime = Date.now();\nconst responseTime = endTime - startTime;\n\n// Get the website details\nconst website = {\n  name: $input.item.json.name,\n  url: $input.item.json.url,\n  expectedStatusCode: $input.item.json.expectedStatusCode,\n  expectedKeyword: $input.item.json.expectedKeyword,\n  maxResponseTime: $input.item.json.maxResponseTime\n};\n\n// Check status code\nconst actualStatusCode = $input.item.json.statusCode;\nconst statusCodeOk = actualStatusCode === website.expectedStatusCode;\n\n// Check for keyword in the response body\nconst responseBody = $input.item.json.body;\nconst keywordFound = responseBody.includes(website.expectedKeyword);\n\n// Check response time\nconst responseTimeOk = responseTime <= website.maxResponseTime;\n\n// Determine overall status\nconst isUp = statusCodeOk && keywordFound && responseTimeOk;\n\n// Create issues array\nconst issues = [];\nif (!statusCodeOk) {\n  issues.push(`Unexpected status code: ${actualStatusCode} (expected ${website.expectedStatusCode})`);\n}\nif (!keywordFound) {\n  issues.push(`Expected keyword \"${website.expectedKeyword}\" not found`);\n}\nif (!responseTimeOk) {\n  issues.push(`Response time ${responseTime}ms exceeds maximum ${website.maxResponseTime}ms`);\n}\n\n// Return the monitoring result\nreturn {\n  name: website.name,\n  url: website.url,\n  timestamp: new Date().toISOString(),\n  isUp,\n  statusCode: actualStatusCode,\n  responseTime,\n  issues,\n  needsAlert: !isUp\n};"
+      },
+      "name": "Analyze Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1130,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.needsAlert }}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "name": "Filter Issues",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "subject": "=🚨 Website Down Alert: {{ $json.name }}",
+        "html": "=<h1>Website Monitoring Alert</h1>\n<p>The following website is experiencing issues:</p>\n\n<h2>{{ $json.name }}</h2>\n<p><strong>URL:</strong> <a href=\"{{ $json.url }}\">{{ $json.url }}</a></p>\n<p><strong>Time:</strong> {{ $json.timestamp }}</p>\n<p><strong>Status:</strong> <span style=\"color: red;\">DOWN</span></p>\n\n<h3>Issues Detected:</h3>\n<ul>\n{% for issue in $json.issues %}\n  <li>{{ issue }}</li>\n{% endfor %}\n</ul>\n\n<h3>Technical Details:</h3>\n<ul>\n  <li>Status Code: {{ $json.statusCode }}</li>\n  <li>Response Time: {{ $json.responseTime }}ms</li>\n</ul>\n\n<p>Please investigate this issue as soon as possible.</p>",
+        "options": {}
+      },
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "your-chat-id",
+        "text": "=🚨 *Website Down Alert: {{ $json.name }}*\n\nThe website {{ $json.url }} is currently DOWN.\n\n*Issues:*\n{% for issue in $json.issues %}\n- {{ issue }}\n{% endfor %}\n\n*Technical Details:*\n- Status Code: {{ $json.statusCode }}\n- Response Time: {{ $json.responseTime }}ms\n\nTime: {{ $json.timestamp }}",
+        "options": {
+          "parseMode": "Markdown"
+        }
+      },
+      "name": "Send Telegram Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Website List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Website List": {
+      "main": [
+        [
+          {
+            "node": "Split Websites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Websites": {
+      "main": [
+        [
+          {
+            "node": "Check Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Website": {
+      "main": [
+        [
+          {
+            "node": "Analyze Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Response": {
+      "main": [
+        [
+          {
+            "node": "Filter Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Issues": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Telegram Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "3",
+  "id": "3",
+  "meta": {
+    "instanceId": "1"
+  },
+  "tags": []
+}
+
