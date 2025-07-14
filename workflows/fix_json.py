@@ -1,4 +1,11 @@
-{
+import json
+import re
+
+# Since the file has extensive malformed JSON, let me reconstruct it properly
+# I'll extract the good parts and rebuild the structure
+
+# Define the complete correct structure
+workflow_data = {
     "name": "YouTube Shorts Story Generator",
     "nodes": [
         {
@@ -16,10 +23,7 @@
             "name": "Schedule Trigger",
             "type": "n8n-nodes-base.scheduleTrigger",
             "typeVersion": 1.1,
-            "position": [
-                240,
-                300
-            ]
+            "position": [240, 300]
         },
         {
             "parameters": {
@@ -29,10 +33,7 @@
             "name": "Story Generator",
             "type": "n8n-nodes-base.function",
             "typeVersion": 1,
-            "position": [
-                460,
-                300
-            ]
+            "position": [460, 300]
         },
         {
             "parameters": {
@@ -41,7 +42,7 @@
                 "nodeCredentialType": "openAiApi",
                 "options": {},
                 "requestMethod": "POST",
-                "sendHeaders": true,
+                "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
                         {
@@ -55,7 +56,7 @@
                         }
                     ]
                 },
-                "sendBody": true,
+                "sendBody": True,
                 "bodyParameters": {
                     "parameters": [
                         {
@@ -81,10 +82,7 @@
             "name": "Script Generator (OpenAI)",
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.1,
-            "position": [
-                680,
-                300
-            ]
+            "position": [680, 300]
         }
     ],
     "connections": {
@@ -115,7 +113,7 @@
     "settings": {
         "executionOrder": "v1"
     },
-    "staticData": null,
+    "staticData": None,
     "tags": [
         {
             "createdAt": "2025-01-09T10:00:00.000Z",
@@ -140,3 +138,9 @@
     "updatedAt": "2025-01-09T10:00:00.000Z",
     "versionId": "1"
 }
+
+# Write out the corrected JSON
+with open('/home/trap/projects/my-n8n-render/workflows/youtube-shorts-workflow.json', 'w') as f:
+    json.dump(workflow_data, f, indent=4)
+
+print("Fixed and simplified the JSON file")
