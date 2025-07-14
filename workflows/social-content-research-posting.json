@@ -1,0 +1,519 @@
+{
+  "name": "Tutorial 3.3 - I Built an AI Agent for Content Research + Auto-Posting  on LinkedIn, X Twitter & Threads (No-Code)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Social media AI agent",
+        "height": 370.1236714277188,
+        "width": 1102.2300855952853,
+        "color": 6
+      },
+      "id": "1b1e2fbe-1fb6-49c5-9f00-c930f89b8e8e",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23442d50-053c-4682-b67e-a0bba3c85acf",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0b8cff62-1b38-44f7-a46c-99573c152678",
+      "name": "Map Session ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        540,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "e59ce999-0ba4-4148-a413-2a993630c48b",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        700,
+        1000
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "B1xgcEjX0hRSH8UV",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "5b7e8496-e505-452b-ab18-cc9c3de6cd90",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        1000
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "b64821f7-2b04-4530-b203-2f719e0640e2",
+      "name": "SERP Search Engine",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        420,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Google Search Tool\n*Remember to save before run for any changes",
+        "height": 285.6509203345433,
+        "width": 1119.0722488985814
+      },
+      "id": "4752408e-bc4a-4e1c-8e2f-60d36b9407f0",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        1180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return { data: $input.all()[0].json.message.content\n  .replace(\"```\", \"\")\n  .replace(\"\\n\", \"\")}"
+      },
+      "id": "46b61a01-d3a0-4bd5-b3b1-52462334ffef",
+      "name": "URL Clean Up",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('OpenAI Search URL Preparation').item.json.message.content }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "xxxxxxxxxxx"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1020,
+        1280
+      ],
+      "id": "a2343643-64ee-44c0-9be0-bde25972036d",
+      "name": "HTTP Request To Serper"
+    },
+    {
+      "parameters": {
+        "jsCode": "return { response: $input.all() };"
+      },
+      "id": "a9e859e2-1926-41c1-8840-a98160f2e891",
+      "name": "Result Parser",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a SERP searcher, you have following API to use:\n\nGeneral Search Tool: https://google.serper.dev/search\nImage Search Tool: https://google.serper.dev/images\nVideo Search Tool: https://google.serper.dev/videos\nPlaces Search Tool: https://google.serper.dev/places // Dont use it\nMaps Search Tool: https://google.serper.dev/maps\nReviews Search Tool: https://google.serper.dev/reviews\nNews Search Tool: https://google.serper.dev/news\nShopping Search Tool: https://google.serper.dev/shopping\nVisual Search Tool: https://google.serper.dev/lens\nAcademic Search Tool: https://google.serper.dev/scholar\nPatent Search Tool: https://google.serper.dev/patents\nSearch Suggestion Tool: https://google.serper.dev/autocomplete\n\nAnd folllowing query string options:\n{\n  \"q\": \"apple inc\",\n  \"location\": \"United States\",\n  \"num\": 20,\n  \"tbs\": \"qdr:w\"\n}\n\nRule of search:\n1. Choose the correct tool for user enquiry.\n2. When preparing the query, try to use keywords to search if it is possible.\n3. If user has specific requirement like \"site\", use Google Search Operators to make it accurate\n4. Base on user's question, prepare the full URL for searching the result.\n5. Only pass the URL to call without any explaination and ``` and \\n:\n\nUser Question:\n{{ $json.query }}\n\n\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "54f1f5a2-afd4-49a4-a291-223c1003eeb5",
+      "name": "OpenAI Search URL Preparation",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        560,
+        1280
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "B1xgcEjX0hRSH8UV",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "This is a web crawler, you can input URL for scrapping the website content.",
+        "url": "https://scrape.serper.dev",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {
+              "name": "url"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "parametersHeaders": {
+          "values": [
+            {
+              "name": "X-API-KEY",
+              "valueProvider": "fieldValue",
+              "value": "xxxxxxxxxxx"
+            }
+          ]
+        }
+      },
+      "id": "b1775e48-f89b-4166-add7-75dd6ef2704e",
+      "name": "Web Crawler",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1060,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "name": "serp_search",
+        "description": "This is a Google search tool based on user questions on searching.",
+        "workflowId": {
+          "__rl": true,
+          "value": "PNROav5o470Odngz",
+          "mode": "list",
+          "cachedResultName": "n8n Tutorial Video — Week 3.3 - Connect All Texting Platform"
+        },
+        "responsePropertyName": "status"
+      },
+      "id": "118640a3-e241-4024-a83f-783769b7c2b9",
+      "name": "Google Search Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        940,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03767225-a9d1-459d-a171-f6ef2cd6af64",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8a22692a-ca44-4751-997d-b468113f2ba0",
+      "name": "Return Value",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1320,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "name": "Post_X_Twitter_Tool",
+        "description": "This tool posts content directly to X (Twitter), supporting single posts and multi-post threads with proper formatting for cohesive delivery.\n\nHow to Use\nWhen to Call: Use this tool for publishing posts to X. It supports:\n\nSingle Post: Text within Twitter's 280-character limit.\nMulti-Post Thread: Content exceeding the limit, formatted into numbered, cohesive posts.\nInput Requirements:\n\nSingle Post: A concise, standalone text.\nThread:\nStart with (THREAD 🧵) 1/{total}.\nNumber posts and separate with ----Thread----.\nEnsure logical progression and value in each post.\nExamples:\nSingle Post:\nRenewable energy is transforming small businesses by reducing costs and boosting sustainability. #RenewableEnergy\n\nThread:\n(THREAD 🧵) 1/3 Renewable energy is revolutionizing small businesses.\n----Thread----\n🧵 2/3 High costs slow adoption, but incentives help.\n----Thread----\n🧵 3/3 A balanced approach could unlock massive potential.\n\nFeatures:\n\nValidates post success or errors.\nEnsures sequence and formatting for threads.",
+        "workflowId": {
+          "__rl": true,
+          "value": "tlbajWr56oM43nij",
+          "mode": "list",
+          "cachedResultName": "n8n Tutorial Video — Common - Send X Twitter Workflow"
+        },
+        "responsePropertyName": "status"
+      },
+      "id": "ed8278a7-e8f6-4c57-99ff-2226f4571258",
+      "name": "Post to X Twitter",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1320,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "name": "Post_Threads_Tool",
+        "description": "This tool posts content directly to Threads, supporting single posts and multi-post threads with proper formatting for engaging delivery.\n\nWhen to Use:\n\nSingle Post: For concise text within Threads' 400-character limit.\nMulti-Post Thread: For content exceeding the limit, split into cohesive posts with clear structure.\nInput Requirements:\n\nSingle Post: A plain text string.\nMulti-Post Thread: Start with (THREAD 🧵) 1/{total}. Number each post and separate them with ----Thread----. Ensure continuity and value in content.\nExample Inputs:\nSingle Post:\nRenewable energy is transforming small businesses, cutting costs, and boosting sustainability. #RenewableEnergy\n\nMulti-Post Thread:\n(THREAD 🧵) 1/3 Renewable energy is revolutionizing businesses.----Thread---- 🧵 2/3 High costs slow adoption, but incentives help.----Thread----🧵 3/3Potential is massive. What’s your take?\n\nFeatures:\n\nSingle post and multi-thread support.\nValidates format, posts in sequence, and confirms success/errors.",
+        "workflowId": {
+          "__rl": true,
+          "value": "OMLDCQUDlCe3Z1dt",
+          "mode": "list",
+          "cachedResultName": "n8n Tutorial Video — Common - Send Threads Workflow"
+        },
+        "responsePropertyName": "status",
+        "jsonSchemaExample": ""
+      },
+      "id": "2168bf28-c764-453c-bb8e-93020bc0e941",
+      "name": "Post Threads",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1240,
+        940
+      ]
+    },
+    {
+      "parameters": {
+        "name": "Post_Linkedin_Tool",
+        "description": "This tool enables direct posting to LinkedIn, ensuring input is formatted for a single post to the user's profile or company page via API.\n\nUsage Instructions:\nCall this tool to publish a LinkedIn post. Input should be a pre-written text string that adheres to LinkedIn’s 3000-character limit and stylistic norms.\n\nInput Requirements:\n\nProfessional tone and well-structured content.\nInclude 2–3 relevant hashtags.\nOptionally embed URLs or call-to-action elements.",
+        "workflowId": {
+          "__rl": true,
+          "value": "Jbi6sn4uZXUHJFnF",
+          "mode": "list",
+          "cachedResultName": "n8n Tutorial Video — Common - Send Linkedin"
+        },
+        "responsePropertyName": "status"
+      },
+      "id": "a7a6092f-e006-469b-ae8b-48197a94da6f",
+      "name": "Post Linkedin",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1160,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {}
+      },
+      "id": "a3156c17-c9ba-4381-80fd-ac51c66afab1",
+      "name": "Social Media Copywriter",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        720,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "90402fd4-fa1b-4ba9-bd42-8e9f069529f2",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        380,
+        860
+      ],
+      "webhookId": "fcbeacaf-4430-4211-b91e-a202abc8953c"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Map Session ID": {
+      "main": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SERP Search Engine": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Search URL Preparation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "URL Clean Up": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request To Serper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request To Serper": {
+      "main": [
+        [
+          {
+            "node": "Result Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Search URL Preparation": {
+      "main": [
+        [
+          {
+            "node": "URL Clean Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Crawler": {
+      "ai_tool": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Result Parser": {
+      "main": [
+        [
+          {
+            "node": "Return Value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Search Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Linkedin": {
+      "ai_tool": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Threads": {
+      "ai_tool": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to X Twitter": {
+      "ai_tool": [
+        [
+          {
+            "node": "Social Media Copywriter",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Map Session ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "27cdf53c-e317-467d-9e60-467e0e86d99b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "PNROav5o470Odngz",
+  "tags": []
+}

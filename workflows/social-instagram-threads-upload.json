@@ -1,0 +1,662 @@
+{
+  "name": "18.3 - Instagram Upload",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Auto-Post to Instagram\n",
+        "height": 272,
+        "width": 1067,
+        "color": 3
+      },
+      "id": "aca159a8-8766-4a44-bcbb-6a31945d42db",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1260, 120]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.threads.net/access_token?grant_type=th_exchange_token&client_secret={{ $json.client_secret }}&access_token={{ $json.access_token }}",
+        "options": {}
+      },
+      "id": "f3a6fb0f-219a-48d6-8d4c-355091ea4fbb",
+      "name": "Exchange Long Credentials",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1620, 480]
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "id": "a2c629c8-ac40-4947-912d-9b2ba3ad6cd9",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1780, 200],
+      "webhookId": "3392ffb7-a915-4b05-b7b1-bd3728550809"
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v21.0",
+        "edge": "media",
+        "options": {
+          "queryParametersJson": "={\n  \"image_url\": \"{{ $json['Source URL'] }}\",\n  \"caption\": {{ JSON.stringify($json.Captions) }}\n}"
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [1640, 200],
+      "id": "0793f72a-e3d9-4569-933e-9fd0f4f045ea",
+      "name": "Upload Instagram Media",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "INSTAGRAM_ACCOUNT_ID",
+          "name": "Instagram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v21.0",
+        "edge": "media_publish",
+        "options": {
+          "queryParametersJson": "={\n  \"creation_id\": \"{{ $json.id }}\"\n}"
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [1940, 200],
+      "id": "d14d2581-7f3f-4778-a0c1-3ef218f0aaee",
+      "name": "Post Instagram Media",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "INSTAGRAM_ACCOUNT_ID",
+          "name": "Instagram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Auto-Post to Threads\n",
+        "height": 412,
+        "width": 1067,
+        "color": 7
+      },
+      "id": "b95d9e85-8fa1-4262-bbd6-17bc7f6f1714",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1260, 420]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45ae74a0-7d74-4ca4-909b-276a63578442",
+              "name": "access_token",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "c3ad863b-e3e8-4258-bd29-f408c1bf900a",
+              "name": "client_secret",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d3cb75f4-f168-4c64-8dad-dc8046386766",
+      "name": "Access Global",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1460, 480]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{}]
+        }
+      },
+      "id": "7eb65bc0-ca74-46cb-a1b9-a3a7c510fa21",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [1300, 200]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{}]
+        }
+      },
+      "id": "f0bc40c3-e84b-4e8b-b7b2-392f71424a33",
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [1300, 660]
+    },
+    {
+      "parameters": {
+        "hostUrl": "=graph.threads.net",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "=v1.0",
+        "edge": "threads",
+        "options": {
+          "queryParametersJson": "={\n  \"media_type\": \"IMAGE\",\n  \"image_url\": \"{{ $json['Source URL'] }}\",\n  \"text\": {{ JSON.stringify($json.Captions) }}\n}"
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [1620, 660],
+      "id": "5631b44a-0603-4a3e-b6e3-f83feffd365a",
+      "name": "Upload Threads Media",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "THREADS_ACCOUNT_ID",
+          "name": "Threads Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "id": "bec9121b-ce4d-4a86-ba4c-5893b54c447c",
+      "name": "Wait1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1780, 660],
+      "webhookId": "3392ffb7-a915-4b05-b7b1-bd3728550809"
+    },
+    {
+      "parameters": {
+        "hostUrl": "=graph.threads.net",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "=v1.0",
+        "edge": "threads_publish",
+        "options": {
+          "queryParametersJson": "={\n  \"creation_id\": \"{{ $json.id }}\"\n}"
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [1940, 660],
+      "id": "ec2ef6dc-ab36-40b1-a1db-09786f251e5a",
+      "name": "Post Threads Media",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "THREADS_ACCOUNT_ID",
+          "name": "Threads Account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [1300, 480],
+      "id": "7bc4e5d8-196d-4feb-9c42-d3354c0f015f",
+      "name": "When clicking 'Test workflow'"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "GOOGLE_SHEETS_DOC_ID",
+          "mode": "list",
+          "cachedResultName": "Image Management",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Instagram Post Status"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1460, 200],
+      "id": "b61aaa69-99e1-4a35-b284-85f60a9516d2",
+      "name": "Get Image Records",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_ACCOUNT_ID",
+          "name": "Google Sheets account (Sam)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "GOOGLE_SHEETS_DOC_ID",
+          "mode": "list",
+          "cachedResultName": "Image Management",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Get Image Records').item.json.row_number }}",
+            "Instagram Post Status": "Posted"
+          },
+          "matchingColumns": ["row_number"],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Captions",
+              "displayName": "Captions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Threads Description",
+              "displayName": "Threads Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Threads Post Status",
+              "displayName": "Threads Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Instagram Post Status",
+              "displayName": "Instagram Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2120, 200],
+      "id": "6ca8495c-5ddc-42ea-9c85-2b88b4c2b375",
+      "name": "Update Instagram Records",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_ACCOUNT_ID",
+          "name": "Google Sheets account (Sam)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "GOOGLE_SHEETS_DOC_ID",
+          "mode": "list",
+          "cachedResultName": "Image Management",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Threads Post Status"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1460, 660],
+      "id": "03017f1e-2e14-404a-9c94-6c7064e6d3b7",
+      "name": "Get Image Records1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_ACCOUNT_ID",
+          "name": "Google Sheets account (Sam)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "GOOGLE_SHEETS_DOC_ID",
+          "mode": "list",
+          "cachedResultName": "Image Management",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Records",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/GOOGLE_SHEETS_DOC_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Get Image Records1').item.json.row_number }}",
+            "Threads Post Status": "Posted"
+          },
+          "matchingColumns": ["row_number"],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Captions",
+              "displayName": "Captions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Source URL",
+              "displayName": "Source URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Threads Description",
+              "displayName": "Threads Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Threads Post Status",
+              "displayName": "Threads Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Instagram Post Status",
+              "displayName": "Instagram Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2120, 660],
+      "id": "44239a3a-5397-4500-8557-67fd40ab754f",
+      "name": "Update Instagram Records1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SHEETS_ACCOUNT_ID",
+          "name": "Google Sheets account (Sam)"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Exchange Long Credentials": {
+      "main": [[]]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Post Instagram Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Instagram Media": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Instagram Media": {
+      "main": [
+        [
+          {
+            "node": "Update Instagram Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Access Global": {
+      "main": [
+        [
+          {
+            "node": "Exchange Long Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Image Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get Image Records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Threads Media": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Post Threads Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Threads Media": {
+      "main": [
+        [
+          {
+            "node": "Update Instagram Records1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Access Global",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Image Records": {
+      "main": [
+        [
+          {
+            "node": "Upload Instagram Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Image Records1": {
+      "main": [
+        [
+          {
+            "node": "Upload Threads Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "09c2acd7-0251-47f6-b3f4-4bbf19f7ecad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "WORKFLOW_INSTANCE_ID"
+  },
+  "id": "bPpSqAZAAF2j5OjC",
+  "tags": []
+}

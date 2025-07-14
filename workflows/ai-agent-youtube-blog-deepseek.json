@@ -1,0 +1,364 @@
+{
+  "name": "Template 10 - How I Built an AI Agent with DeepSeek AI to Turn YouTube Video into Blog via Telegram (No-Code)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://www.searchapi.io/api/v1/search",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "engine",
+              "value": "youtube_transcripts"
+            },
+            {
+              "name": "video_id",
+              "value": "={{ $json.videoId }}"
+            },
+            {
+              "name": "lang",
+              "value": "={{$json['lang'] || 'en'}}"
+            },
+            {
+              "name": "transcript_type",
+              "value": "={{$json['transcript_type'] || 'auto'}}"
+            },
+            {
+              "name": "api_key",
+              "value": "="
+            }
+          ]
+        }
+      },
+      "name": "YouTube Transcripts API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [3920, 760],
+      "id": "0aef88e8-5b7e-40fc-9de9-1355e0a90194"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "Just got the transcript, loading more...",
+        "additionalFields": {
+          "appendAttribution": "="
+        }
+      },
+      "id": "1725206e-d5b9-4587-9714-8b4a60310117",
+      "name": "Telegram1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [4100, 760],
+      "credentials": {
+        "telegramApi": {
+          "id": "Xk9mWNLpKKrsLn7R",
+          "name": "Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "function extractYoutubeId(url) {\n    const patterns = [\n        /(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/)([^&\\n?#]+)/,\n        /youtube\\.com\\/shorts\\/([^&\\n?#]+)/\n    ];\n\n    for (const pattern of patterns) {\n        const match = url.match(pattern);\n        if (match && match[1]) {\n            return match[1];\n        }\n    }\n    return null;\n}\n\n// Modified code\nconst message = items[0].json.message.text;\nconst urlRegex = /(https?:\\/\\/)?(www\\.)?(youtube\\.com|youtu\\.be)\\/.+/;\nconst youtubeUrl = message.match(urlRegex)?.[0];\n\nif (!youtubeUrl) {\n    return [{json: {error: 'No YouTube URL found'}}];\n}\n\nconst videoId = extractYoutubeId(youtubeUrl);\nreturn [{json: {videoId}}];"
+      },
+      "id": "05e74853-7aed-482c-898b-9e710b5a703c",
+      "name": "Extract video id",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [3740, 760]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Convert the following YouTube transcript into a detailed, reader-friendly, 1-2 minute read blog post in the style of a Medium article. Use subheadings, and bullet points where appropriate.\\nPlease provide the following statistics at the beginning:\\n- Length of the youtube video: (Output this {{ $('YouTube Transcripts API').item.json.transcripts[$('YouTube Transcripts API').item.json.transcripts.length - 1].start }} in terms of minutes) \\n- Expected reading time of the blog: xx minutes\\n- Time saved: xx minutes\\nNote:\\n- Please remove \\\"#\\\"\\n- And use numbers to label the points\\n- Do NOT use markdown format\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Here's the transcript:{{ JSON.stringify($('YouTube Transcripts API').item.json.transcripts).replaceAll(\"\\\"\", \"\\\\\\\"\") }}\"\n    }\n  ],\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "id": "61135a76-ba3c-4d42-857e-156ca5ac7d43",
+      "name": "Get Transcript By Deepseek",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4260, 760],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "qT9YRvNyjJGKEb9x",
+          "name": "Deepseek"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Inputs\nconst inputData = items[0].json;\nconst blogContent = inputData.choices[0].message.content; // Assuming this is the response content\nconst costPerToken = {\n  input: 0.14 / 1000000,\n  output: 0.28 / 1000000,\n};\n\n\n\n// Calculate input and output tokens\nconst inputTokens = inputData.usage.prompt_tokens; // Approximate using character count\nconst outputTokens = inputData.usage.completion_tokens; // Approximate using character count\n\n// Total cost calculation\nconst totalCost = (inputTokens * costPerToken.input) + (outputTokens * costPerToken.output);\n\n// Split text into paragraphs\nconst paragraphs = blogContent.split('\\n\\n'); // Assuming paragraphs are separated by double line breaks\n\nconst newParagraphs = paragraphs.map((paragraph, index) => ({\n  json: {\n    paragraphNumber: index + 1,\n    paragraphContent: paragraph.trim(),\n  },\n}));\n\nnewParagraphs.push({\n    json: {\n      paragraphNumber: paragraphs.length + 1,\n      paragraphContent: `Total Cost: $${totalCost}`\n    },\n});\n\nreturn newParagraphs;\n"
+      },
+      "id": "21cf659e-be52-46d6-b27e-27e64b297b09",
+      "name": "Split + total cost",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4420, 760]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram1').item.json.result.chat.id }}",
+        "text": "={{ $json.paragraphContent }}",
+        "additionalFields": {}
+      },
+      "id": "6102f985-b020-4ac9-b52c-aeeb1f6d8b8e",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [4560, 760],
+      "credentials": {
+        "telegramApi": {
+          "id": "Xk9mWNLpKKrsLn7R",
+          "name": "Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "eeb48362-bda7-4636-b54b-0e846d3f3340",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [3580, 760],
+      "webhookId": "c1b3fe35-7941-4a96-bf69-999cfc51a81f",
+      "credentials": {
+        "telegramApi": {
+          "id": "Xk9mWNLpKKrsLn7R",
+          "name": "Telegram"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Telegram <> Deepseek - Youtube to Blog",
+        "height": 273.23906080870233,
+        "width": 1543.1696524754116
+      },
+      "id": "0bcf9b79-4c85-4ef7-8c28-d7e7db0bb061",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [3540, 680]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1bOMSkhw4k1-NLRsDFnp031bHoZhQQcjbTAKshnbozNs",
+          "mode": "list",
+          "cachedResultName": "Tutorial 7.3: Telegram <> Deepseek - Youtube to Blog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bOMSkhw4k1-NLRsDFnp031bHoZhQQcjbTAKshnbozNs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bOMSkhw4k1-NLRsDFnp031bHoZhQQcjbTAKshnbozNs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+            "date": "={{ $('Telegram Trigger').first().json.message.date }}",
+            "blog": "={{ $json.mergedBlogContent }}",
+            "youtube url": "={{ $('Telegram Trigger').first().json.message.text }}",
+            "username": "={{ $('Telegram Trigger').first().json.message.from.username }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "youtube url",
+              "displayName": "youtube url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "blog",
+              "displayName": "blog",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c43bc6ba-6557-47c2-97cb-a61622ff47df",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [4880, 760],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Otcg7vToNUrwIwzD",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge blog content\nconst blogContent = $('Get Transcript By Deepseek').item.json.choices[0].message.content;\nreturn [\n  {\n    json: {\n      mergedBlogContent: blogContent,\n    },\n  }\n];"
+      },
+      "id": "a3af52df-3541-4d35-a40a-fdf62faf7416",
+      "name": "Merge Content1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4720, 760]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "YouTube Transcripts API": {
+      "main": [
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram1": {
+      "main": [
+        [
+          {
+            "node": "Get Transcript By Deepseek",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract video id": {
+      "main": [
+        [
+          {
+            "node": "YouTube Transcripts API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Transcript By Deepseek": {
+      "main": [
+        [
+          {
+            "node": "Split + total cost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split + total cost": {
+      "main": [
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract video id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Response": {
+      "main": [
+        [
+          {
+            "node": "Merge Content1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Content1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "310feabd-f116-43fb-9e24-d8e286c39f96",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "adcyNrOf05jYgDkD",
+  "tags": [
+    {
+      "createdAt": "2025-01-28T07:53:03.821Z",
+      "updatedAt": "2025-01-28T07:53:03.821Z",
+      "id": "UmrR2LNV3n5EWSeP",
+      "name": "andynocode free"
+    }
+  ]
+}

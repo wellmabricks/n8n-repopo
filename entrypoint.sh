@@ -3,6 +3,9 @@
 
 set -e
 
+# Set environment variable to enforce correct config file permissions
+export N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+
 echo "🚀 Starting n8n with auto-import..."
 echo "=================================="
 
@@ -32,7 +35,8 @@ if [ -d "$CREDENTIAL_DIR" ] && [ -n "$(ls -A "$CREDENTIAL_DIR" 2>/dev/null)" ]; 
             echo "  → $(basename "$file")"
         fi
     done
-    n8n import:credential --input="$CREDENTIAL_DIR" --separate
+    # Use the correct n8n command for importing credentials
+    n8n import:credentials --input="$CREDENTIAL_DIR" --separate
     echo "✅ Credentials imported successfully"
 else
     echo "🔐 No credentials found, skipping import"

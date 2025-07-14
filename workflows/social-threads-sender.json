@@ -1,0 +1,776 @@
+{
+  "name": "Common - Send Threads Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a19a7113-c590-467d-b09b-8b02c6c4be22",
+              "name": "account_id",
+              "value": "YOUR ACCOUNT ID",
+              "type": "string"
+            },
+            {
+              "id": "f12a7c5e-9366-477c-80e7-b0e670bb259c",
+              "name": "thread_text",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a7fd0e9c-4795-4df4-8fdc-170226198e55",
+      "name": "Edit Fields (Proxa)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1160, 480]
+    },
+    {
+      "parameters": {
+        "content": "## Send Thread (threads.net)",
+        "height": 373.2358768014966,
+        "width": 1815.0855597421642,
+        "color": 3
+      },
+      "id": "b105b51d-5713-4324-9243-5625cb6c24bd",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [940, 380]
+    },
+    {
+      "parameters": {},
+      "id": "5d2e86ff-4daa-4c8a-be4f-f147a45450ef",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [1000, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "const threadText = $(\"Edit Fields (Proxa)\").first().json.thread_text.split(\"----Thread----\").map((word) => word.trim());\n\nreturn { threadText };\n"
+      },
+      "id": "0c13c7df-4049-49f6-8671-31d776810a2f",
+      "name": "Split Threads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 480]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "account_id",
+              "value": "={{ $json.account_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6d4d993d-a91e-477f-9bce-bc9e1207cb6f",
+      "name": "Get Threads Credential",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1340, 480],
+      "credentials": {
+        "mySql": {
+          "id": "XXXXX",
+          "name": "MySQL Workflow"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "57891497-7242-45bc-90b3-f567c5c5fd34",
+      "name": "Loop Over threads",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1820, 480]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "threadText",
+        "options": {}
+      },
+      "id": "738ed45a-fb45-4e1c-83a3-6fe985aa379b",
+      "name": "Split Out Threads",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [1660, 480]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1bc83b78-f1e0-4fc0-b2f3-b4e17842d9ff",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "088e65a7-d3ab-4120-ab3a-ebff516cddf0",
+      "name": "IF First Item",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1980, 560]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Get Threads Credential').first().json.threads_id }}/threads?media_type=TEXT&text={{ encodeURIComponent($json['threadText']) }}&access_token={{ $('Get Threads Credential').first().json.access_token }}",
+        "options": {}
+      },
+      "id": "2b219db9-17ce-45c3-9be3-f853d8e5d34f",
+      "name": "Create Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Get Threads Credential').first().json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('Get Threads Credential').first().json.access_token }}",
+        "options": {}
+      },
+      "id": "3f04394e-33c4-4a49-9d4a-d520201e0599",
+      "name": "Post Thread Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2440, 400]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "494355bd-510f-4204-9620-00d96faff69a",
+      "name": "Wait Time",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2300, 400],
+      "webhookId": "66ffc7f1-1380-4b4a-867f-92b59a5ae849"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85baf1f4-4690-434a-8826-69f24748be46",
+              "name": "prev_thread_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "de222410-3ade-46ee-9070-e862b08aa1fb",
+      "name": "Set ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2600, 560]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/me/threads",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.threadText }}"
+            },
+            {
+              "name": "reply_to_id",
+              "value": "={{  $('Set ID').first(0, $runIndex).json.prev_thread_id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Get Threads Credential').first().json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "59a5b619-1738-44b3-975e-e216674fa3f2",
+      "name": "Send Reply Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2160, 560]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "0dca4005-7318-4800-a2b0-170da503d249",
+      "name": "Wait Time1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2300, 560],
+      "webhookId": "66ffc7f1-1380-4b4a-867f-92b59a5ae849"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Get Threads Credential').first().json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('Get Threads Credential').first().json.access_token }}",
+        "options": {}
+      },
+      "id": "7f4e66a6-ba09-4f79-b7f7-099ea447b634",
+      "name": "Send Existing Threads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2440, 560]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03767225-a9d1-459d-a171-f6ef2cd6af64",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b62e1601-05b0-4192-b250-6efebd76b4f0",
+      "name": "Return Value",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1980, 400]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.threads.net/access_token?grant_type=th_exchange_token&client_secret={{ $json.client_secret }}&access_token={{ $json.access_token }}",
+        "options": {}
+      },
+      "id": "1eea8c12-b634-4e89-a44e-b1bf638c252c",
+      "name": "Exchange Long Credentials",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, -40]
+    },
+    {
+      "parameters": {
+        "content": "## Threads Access Token Connection",
+        "height": 467.63788338099516,
+        "width": 848.9918361387536,
+        "color": 7
+      },
+      "id": "3cf95aa0-c397-4670-94f0-4048cf4a4ef4",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [940, -120]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45ae74a0-7d74-4ca4-909b-276a63578442",
+              "name": "access_token",
+              "value": "YOUR ACCESS TOKEN",
+              "type": "string"
+            },
+            {
+              "id": "c3ad863b-e3e8-4258-bd29-f408c1bf900a",
+              "name": "client_secret",
+              "value": "YOUR CLIENT SECRET",
+              "type": "string"
+            },
+            {
+              "id": "67800dde-27f3-402a-bb29-221fb6a1480e",
+              "name": "account_id",
+              "value": "YOUR ACCOUNT ID",
+              "type": "string"
+            },
+            {
+              "id": "c8676dfd-f42b-4b37-92cc-95a2d4dfe0fe",
+              "name": "language",
+              "value": "YOUR LANGUAGE",
+              "type": "string"
+            },
+            {
+              "id": "d65b2215-b84f-42e6-8702-1adb951365a6",
+              "name": "threads_id",
+              "value": "YOUR THREADS ID",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d30dee86-4fb0-42ae-b68f-893524238098",
+      "name": "First Access Global",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1140, -40]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "dataMode": "defineBelow",
+        "columnToMatchOn": "account_id",
+        "valueToMatchOn": "={{ $('First Access Global').item.json.account_id }}",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "token_type",
+              "value": "={{ $json.token_type }}"
+            },
+            {
+              "column": "expires_in",
+              "value": "={{ $now + $json.expires_in }}"
+            },
+            {
+              "column": "access_token",
+              "value": "={{ $json.access_token }}"
+            },
+            {
+              "column": "language",
+              "value": "={{ $('First Access Global').item.json.language }}"
+            },
+            {
+              "column": "threads_id",
+              "value": "={{ $('First Access Global').item.json.threads_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e6726d6-a70a-4677-856e-ca147e6c3836",
+      "name": "Save Token",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1460, -40],
+      "credentials": {
+        "mySql": {
+          "id": "xxxxx",
+          "name": "MySQL Workflow"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3ad863b-e3e8-4258-bd29-f408c1bf900a",
+              "name": "client_secret",
+              "value": "YOUR CLIENT SECRET",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a6985b74-6360-429d-a6b2-70a66c055ae9",
+      "name": "Refresh Token Global",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1140, 180]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "expires_in",
+              "condition": "<",
+              "value": "={{ $now + 86400 * 7 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "16925988-169e-49d8-be1c-79ca8af2f35d",
+      "name": "Get Expiried Token",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1300, 180],
+      "credentials": {
+        "mySql": {
+          "id": "xxxxx",
+          "name": "MySQL Workflow"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token={{ $json.access_token }}",
+        "options": {}
+      },
+      "id": "2aca3e90-3afd-46c2-84b9-c861e1d889b7",
+      "name": "Refresh Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1460, 180]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "dataMode": "defineBelow",
+        "columnToMatchOn": "account_id",
+        "valueToMatchOn": "={{ $('Get Expiried Token').item.json.account_id }}",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "expires_in",
+              "value": "={{ $now + $json.expires_in }}"
+            },
+            {
+              "column": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "73917032-29b8-48ff-a711-5bf6b1b40b73",
+      "name": "Update Token",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [1620, 180],
+      "credentials": {
+        "mySql": {
+          "id": "xxxxx",
+          "name": "MySQL Workflow"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "7cdddade-00d0-4267-9601-f729431f4cae",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [980, -40]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{}]
+        }
+      },
+      "id": "eeae09a6-15ff-48c0-9cc8-de9cb9360f8e",
+      "name": "Research Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [980, 180]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields (Proxa)": {
+      "main": [
+        [
+          {
+            "node": "Get Threads Credential",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields (Proxa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Threads": {
+      "main": [
+        [
+          {
+            "node": "Split Out Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Threads Credential": {
+      "main": [
+        [
+          {
+            "node": "Split Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over threads": {
+      "main": [
+        [
+          {
+            "node": "Return Value",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF First Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Threads": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF First Item": {
+      "main": [
+        [
+          {
+            "node": "Create Thread",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Reply Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Thread": {
+      "main": [
+        [
+          {
+            "node": "Wait Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Thread Data": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Time": {
+      "main": [
+        [
+          {
+            "node": "Post Thread Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set ID": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply Thread": {
+      "main": [
+        [
+          {
+            "node": "Wait Time1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Time1": {
+      "main": [
+        [
+          {
+            "node": "Send Existing Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Existing Threads": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exchange Long Credentials": {
+      "main": [
+        [
+          {
+            "node": "Save Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "First Access Global": {
+      "main": [
+        [
+          {
+            "node": "Exchange Long Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Token Global": {
+      "main": [
+        [
+          {
+            "node": "Get Expiried Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Expiried Token": {
+      "main": [
+        [
+          {
+            "node": "Refresh Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Token": {
+      "main": [
+        [
+          {
+            "node": "Update Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "First Access Global",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Schedule": {
+      "main": [
+        [
+          {
+            "node": "Refresh Token Global",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b56ae915-25a9-406e-9e9c-efeb482a8b65",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "OMLDCQUDlCe3Z1dt",
+  "tags": []
+}

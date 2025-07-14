@@ -1,0 +1,834 @@
+{
+  "name": "Template 12 - Build a Multichannel RAG based AI Chatbot with Custom Knowledge Base in 20 mins",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Create knowledge base",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Knowledge file",
+              "fieldType": "file"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ce787df7-baac-4a1c-aad1-20d015b33f89",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [-320, 280],
+      "webhookId": "aa82509b-1e5f-4216-ac01-ff57047304d4"
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {}
+      },
+      "id": "6abe8f18-8129-4075-bf28-18e1c0001c1d",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.1,
+      "position": [80, 500],
+      "credentials": {
+        "openAiApi": {
+          "id": "Xyz9cEjX0hRSH8UV",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Extract from File').item.json.text }}",
+        "options": {}
+      },
+      "id": "0dd29d51-d327-4b46-9b35-47dabfcba93a",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [220, 500]
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "id": "585887a5-606e-493c-8ea6-6b9526fb458e",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [220, 660]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Knowledge_file",
+        "options": {}
+      },
+      "id": "e5915b6f-a8ee-4498-9c4b-02577149a9bd",
+      "name": "Extract from File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [-120, 280]
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {}
+      },
+      "id": "3c228c86-040b-4d8b-9b99-9b8c425d2c2d",
+      "name": "Embeddings OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.1,
+      "position": [600, 1680],
+      "credentials": {
+        "openAiApi": {
+          "id": "Xyz9cEjX0hRSH8UV",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "company_knowledge_base",
+        "description": "this node connect to our company knowledge base",
+        "topK": 10
+      },
+      "id": "9b5a5747-fb85-462f-8f0a-dde199083a80",
+      "name": "Vector Store Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [580, 1340]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3eac5b4c-0d60-4b94-9aaf-6c003ba6cb1e",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [760, 1500],
+      "credentials": {
+        "openAiApi": {
+          "id": "Xyz9cEjX0hRSH8UV",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-demo",
+          "mode": "list",
+          "cachedResultName": "n8n-demo"
+        },
+        "options": {}
+      },
+      "id": "7daa2f42-0256-4c35-8d86-a7076f6abf1b",
+      "name": "Pinecone Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [480, 1500],
+      "credentials": {
+        "pineconeApi": {
+          "id": "XyzTCzeuRjX6Sacj",
+          "name": "Stanley PineconeApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "trigger": ["any_event"],
+        "channelId": {
+          "__rl": true,
+          "value": "C088MPJKX2R",
+          "mode": "list",
+          "cachedResultName": "n8n-message"
+        },
+        "options": {}
+      },
+      "id": "78e6afaf-0cea-4d47-9344-d2ddd61c5ca8",
+      "name": "Slack Trigger",
+      "type": "n8n-nodes-base.slackTrigger",
+      "typeVersion": 1,
+      "position": [-320, 1200],
+      "webhookId": "e9131214-3a32-4a7a-8fc1-9772a5c288e0",
+      "credentials": {
+        "slackApi": {
+          "id": "Xyz7YeDHC4kIX8uu",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "=deepseek-chat",
+        "options": {
+          "baseURL": "https://api.deepseek.com"
+        }
+      },
+      "id": "11f0cf94-5f7a-4dae-94ab-2b5740a73f09",
+      "name": "OpenAI Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [420, 1340],
+      "credentials": {
+        "openAiApi": {
+          "id": "XyzJsSqFbMVsJobS",
+          "name": "Deepseek"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": ["messages"]
+      },
+      "id": "4683c10c-8ef9-410c-a5c6-f1170edd990a",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [-160, 1000],
+      "webhookId": "fb46ee53-2b0b-4263-abec-72a870c104c8",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "XyzC8wbJVDTMBBfz",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "={{ $('WhatsApp Trigger').first().json.metadata.phone_number_id }}",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').first().json.messages[0].from }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {},
+        "requestOptions": {}
+      },
+      "id": "4ba8bf1d-927a-4c21-984a-d92c3b3b4bb0",
+      "name": "WhatsApp Business Cloud",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [1160, 1160],
+      "credentials": {
+        "whatsAppApi": {
+          "id": "Xyzqddu9dJN4TDSX",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "88fe8e52-2aa8-444e-a4fa-50c458f3ff36",
+              "name": "message",
+              "value": "={{ $json.messages[0].text.body }}",
+              "type": "string"
+            },
+            {
+              "id": "59a991b6-e266-440e-8eaf-df68bfdba64d",
+              "name": "platform",
+              "value": "whatsapp",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2db1657f-cedd-4697-bcf4-f5de7da94c68",
+      "name": "From Whatsapp",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 1000]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7e70825-797f-4a88-b32c-616e484cd086",
+              "name": "message",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "329151ff-c365-4bd5-a43e-328a2a6ef6bd",
+              "name": "platform",
+              "value": "slack",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "461d67dd-be29-40b2-970e-c630c94fa511",
+      "name": "From Slack",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 1200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "343847f5-e87e-441d-945a-26efdbf4c17e",
+              "leftValue": "={{ $json.text }}",
+              "rightValue": "@U088QMASK34",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "ff66f14a-b7e9-4f2b-983e-970a32ee5783",
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "app_mention",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c7dd6cf1-e727-4988-9cd3-4ad98d149632",
+      "name": "If is message1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-160, 1200]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "={{ $('Slack Trigger').first().json.channel }}",
+          "mode": "id"
+        },
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "otherOptions": {}
+      },
+      "id": "2503e757-8c37-42be-a452-816b832465bd",
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1160, 1000],
+      "webhookId": "7194f06a-73b6-446b-a937-10e77b6258fb",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "XyzjwCiVOgeW3Jq2",
+          "name": "Slack account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fe633b89-17d3-45e2-a296-67514075607f",
+              "name": "platform",
+              "value": "={{ $json.platform }}",
+              "type": "string"
+            },
+            {
+              "id": "22ac00c2-bd12-41bf-bb44-53971f733ef0",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "439d30ce-99d1-4573-9a9d-e6380be8a197",
+      "name": "Platform",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 1100]
+    },
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "726f7510-eda5-4df8-9418-81b46d96c168",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [-160, 1400],
+      "webhookId": "2221c31f-62ba-49d7-9b33-0555b2dc4939",
+      "credentials": {
+        "telegramApi": {
+          "id": "XyzxHOdUfb1UoFh0",
+          "name": "Telegram - @andynocode_youtubeblogbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7e70825-797f-4a88-b32c-616e484cd086",
+              "name": "message",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "329151ff-c365-4bd5-a43e-328a2a6ef6bd",
+              "name": "platform",
+              "value": "telegram",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c0627665-5e76-4559-9381-f136bf394a04",
+      "name": "From Telegram",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 1400]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').first().json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "4b534697-9867-4e7e-99c2-488c34dc2615",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1160, 1340],
+      "credentials": {
+        "telegramApi": {
+          "id": "XyzxHOdUfb1UoFh0",
+          "name": "Telegram - @andynocode_youtubeblogbot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Add knowledge to Pinecone",
+        "height": 638.281233229888,
+        "width": 959.8620602184544,
+        "color": 5
+      },
+      "id": "b5f11a3e-5889-4510-a652-e97b365d0322",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-380, 200]
+    },
+    {
+      "parameters": {
+        "content": "## Internal Knowledge AI Agent for Whatsapp, Slack and Telegram",
+        "height": 1009.1932100204135,
+        "width": 1789.5335872498915,
+        "color": 4
+      },
+      "id": "b7c9d19f-4701-49c0-86ac-9f9c2b304739",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-380, 880]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Platform').item.json.platform }}",
+                    "rightValue": "slack",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "slack"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "13c7f9b0-0dd2-4273-8015-458ceadfd0bc",
+                    "leftValue": "={{ $('Platform').item.json.platform }}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "whatsapp"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b333793d-e787-493c-800d-ece001fb3930",
+                    "leftValue": "={{ $('Platform').item.json.platform }}",
+                    "rightValue": "telegram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "telegram"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6cb971c1-e3db-493d-b3bf-0f75b0055549",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [800, 1100]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-demo",
+          "mode": "list",
+          "cachedResultName": "n8n-demo"
+        },
+        "options": {}
+      },
+      "id": "43f69c2c-4deb-48e7-9785-be55448ad132",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [80, 280],
+      "credentials": {
+        "pineconeApi": {
+          "id": "XyzTCzeuRjX6Sacj",
+          "name": "Stanley PineconeApi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "f55a9c75-fd1d-43e1-9fab-be2cf89784e8",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [420, 1100]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Trigger": {
+      "main": [
+        [
+          {
+            "node": "If is message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "From Whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If is message1": {
+      "main": [
+        [
+          {
+            "node": "From Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Platform": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From Whatsapp": {
+      "main": [
+        [
+          {
+            "node": "Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From Slack": {
+      "main": [
+        [
+          {
+            "node": "Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "From Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From Telegram": {
+      "main": [
+        [
+          {
+            "node": "Platform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "WhatsApp Business Cloud",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "792efd70-149b-4d42-8c8a-dd56d0fa2165",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "FEVFL57dGuimRASv",
+  "tags": [
+    {
+      "createdAt": "2025-01-28T07:53:03.821Z",
+      "updatedAt": "2025-01-28T07:53:03.821Z",
+      "id": "UmrR2LNV3n5EWSeP",
+      "name": "andynocode free"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "name": "Common - Send Linkedin",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d85d88fd-e64e-42b8-ab13-95eab606d1f4",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [860, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a19a7113-c590-467d-b09b-8b02c6c4be22",
+              "name": "account_id",
+              "value": "XXXXX",
+              "type": "string"
+            },
+            {
+              "id": "f12a7c5e-9366-477c-80e7-b0e670bb259c",
+              "name": "content_text",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8a23d934-bd8b-4c47-b674-d7cd1cace448",
+      "name": "Edit Fields (Proxa)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1020, 400]
+    },
+    {
+      "parameters": {
+        "content": "## Send Linkedin",
+        "height": 230.98554483006953,
+        "width": 702.5702971359719,
+        "color": 5
+      },
+      "id": "e638b791-566d-465b-b507-91b08b575f72",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [820, 340]
+    },
+    {
+      "parameters": {
+        "person": "XXXXX",
+        "text": "={{ $json.content_text }}",
+        "additionalFields": {}
+      },
+      "id": "10b8ca94-648c-436d-a9ae-41d9b4d05a7c",
+      "name": "LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [1180, 400],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "XXXXX",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85baf1f4-4690-434a-8826-69f24748be46",
+              "name": "prev_thread_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "27df5246-4a77-417c-a53a-d7dde6c17a82",
+      "name": "Set ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 400]
+    }
+  ],
+  "pinData": {
+    "Execute Workflow Trigger": [
+      {
+        "json": {
+          "query": "In 2023, U.S. venture capital investing took a dive with VCs disbursing $170.6B to 15,766 startups, compared to $242.2B for 17,592 in 2022. Declines in fundraising, exits, and valuations hit hard. Yet, the $170.6B was just 1.4% lower than 2019 levels."
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields (Proxa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields (Proxa)": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fa53228f-4499-42a9-af85-094b07893111",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "Jbi6sn4uZXUHJFnF",
+  "tags": []
+}

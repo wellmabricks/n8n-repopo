@@ -1,0 +1,273 @@
+{
+  "name": "Tutorial 13.2 - Social Media AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "8620dbc3-256a-4f1c-931e-604180630b88",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [1080, 780],
+      "credentials": {
+        "openAiApi": {
+          "id": "***MASKED***",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionKey": "=chat_with_{{ $('Listen for incoming events').first().json.message.chat.id }}",
+        "contextWindowLength": 10
+      },
+      "id": "341ac6cc-a268-49ea-b3b7-4222168d03df",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [1200, 780],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "id": "c00b878e-737f-4e18-b41e-8f85eb9ca628",
+      "name": "Listen for incoming events",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [960, 560],
+      "webhookId": "***MASKED***",
+      "credentials": {
+        "telegramApi": {
+          "id": "***MASKED***",
+          "name": "Telegram Social"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Listen for incoming events').first().json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "f0f59003-7cab-4875-a843-9445b68bfc20",
+      "name": "Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "position": [1460, 560],
+      "typeVersion": 1.1,
+      "webhookId": "***MASKED***",
+      "credentials": {
+        "telegramApi": {
+          "id": "***MASKED***",
+          "name": "Telegram Social"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Listen for incoming events').first().json.message.from.id }}",
+        "text": "={{ $('AI Agent').item.json.output.replace(/&/g, \"&amp;\").replace(/>/g, \"&gt;\").replace(/</g, \"&lt;\").replace(/\"/g, \"&quot;\") }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "e09464f9-94a7-44b7-ad8f-9b915d4c9614",
+      "name": "Correct errors",
+      "type": "n8n-nodes-base.telegram",
+      "position": [1740, 580],
+      "typeVersion": 1.1,
+      "webhookId": "***MASKED***",
+      "credentials": {
+        "telegramApi": {
+          "id": "***MASKED***",
+          "name": "Telegram Social"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7413a839-f285-451f-8c82-b34606b599ad",
+      "name": "SerpAPI",
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [1600, 780],
+      "credentials": {
+        "serpApi": {
+          "id": "***MASKED***",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "Scheduling_Social_Media_AI_Agent",
+        "description": "=This is a social media schedule posting tool. The input should be an object consist these fields:\nscheduleTime: date-time (Current time is {{ DateTime.fromISO($now).toLocaleString(DateTime.DATETIME_FULL) }})\nplatform: \"X\" or \"Instagram\" or \"Threads\" or \"Facebook\", \"Linkedin\"\ntitle: 100 characters max text\ncontent: text (Pure text, don't use any html tag)\ngraphic: graphic url or empty text\ntype: \"Text\" or \"Photo\"\n\n",
+        "workflowId": {
+          "__rl": true,
+          "value": "***MASKED***",
+          "mode": "list",
+          "cachedResultName": "n8n Tutorial Video — Tutorial 13.2 - Scheduling Agent"
+        },
+        "specifyInputSchema": true,
+        "schemaType": "manual",
+        "inputSchema": "{\n    \"scheduleTime\": \"\",\n    \"platform\": \"X\",\n    \"title\": \"Hello this is a testing title.\",\n    \"content\": \"Hello this is a testing.\",\n    \"graphic\": \"\",\n    \"type\": \"text\"\n}"
+      },
+      "id": "aee94a09-1d33-4fe7-872b-c031442c6292",
+      "name": "Scheduling Social Media Agent Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [1340, 780]
+    },
+    {
+      "parameters": {
+        "name": "AI_Image_Tool",
+        "description": "Call this tool to generate AI Image, when the user asks to draw something. It will return the url. Please output the url of the image.",
+        "workflowId": "=***MASKED***",
+        "fields": {
+          "values": [
+            {
+              "name": "chat_id",
+              "stringValue": "={{ $('Listen for incoming events').first().json.message.chat.id }}"
+            }
+          ]
+        }
+      },
+      "id": "c4cb8d5b-2c89-41fd-8238-98c214e65735",
+      "name": "AI Image Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [1480, 780],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "humanMessage": "TOOLS\n------\nAs an assistant, you can ask the user to use tools to gather information that may help in creating, scheduling, or optimizing social media content. The tools available to the user are:\n\n{tools}\n\n{format_instructions}\n\nUSER'S INPUT\n--------------------\nHere is the user's input (remember to respond with a markdown code snippet of a JSON blob with a single action, and NOTHING else):\n\n{{input}}",
+          "systemMessage": "=You are a helpful AI assistant designed to manage and optimize social media content. Your tasks include scheduling posts, creating engaging content for various platforms, and conducting research on the internet. You are chatting with the user named {{ $json.message.from.first_name }}. Today is {{ DateTime.fromISO($now).toLocaleString(DateTime.DATETIME_FULL) }}.\n\nFrom time to time, address the user by their name (if provided). Always respond in Telegram-supported HTML format. Here are your key responsibilities and formatting guidelines:\n\nTasks:\nSchedule Social Media Posts: Plan and schedule posts for platforms like X (280 characters), Instagram (2200 characters), Threads (500 characters), Facebook (1000 characters), and LinkedIn (3000 characters). The input should be an object consist these fields:\nscheduleTime: date-time\nplatform: \"X\" or \"Instagram\" or \"Threads\" or \"Facebook\", \"Linkedin\"\ntitle: 100 characters max text\ncontent: text\ngraphic: graphic url or empty text\ntype: \"Text\" or \"Photo\"\n\nCreate Content: Generate platform-specific content that aligns with the user's goals, brand voice, and audience preferences.\n\nResearch: Conduct internet research to gather relevant information, trends, or data to enhance content quality.\n\nFormatting Instructions:\n1. Use the following supported HTML tags for formatting:\nBold: <b>bold</b>, <strong>bold</strong>\nItalic: <i>italic</i>, <em>italic</em>\nUnderline: <u>underline</u>, <ins>underline</ins>\nStrikethrough: <s>strikethrough</s>, <strike>strikethrough</strike>, <del>strikethrough</del>\nSpoiler: <span class=\"tg-spoiler\">spoiler</span>, <tg-spoiler>spoiler</tg-spoiler>\nCombined Formatting: <b>bold <i>italic bold <s>italic bold strikethrough <span class=\"tg-spoiler\">italic bold strikethrough spoiler</span></s> <u>underline italic bold</u></i> bold</b>\nLinks: <a href=\"http://www.example.com/\">inline URL</a>\nCode: <code>inline fixed-width code</code>\nPre-formatted Code: <pre>pre-formatted fixed-width code block</pre>\n2. Wrap any code in the appropriate tags. For example:\n<pre><code class=\"language-python\">pre-formatted fixed-width code block written in Python</code></pre>\n3. Replace <, >, and & symbols that are not part of a tag or HTML entity with their corresponding HTML entities (&lt;, &gt;, &amp;).\n4. If the user sends a message starting with /, treat it as a Telegram bot command (e.g., /start). Respond accordingly based on the command's purpose.\n\nExample Interaction:\nUser: Hi, can you help me create a post for Instagram about our new product launch?\nAssistant: Sure, {{ $json.message.from.first_name }}! Here's a draft for your Instagram post (max 2200 characters):\n```html```\n<b>🚀 Exciting News!</b>  \nWe're thrilled to announce the launch of our <i>all-new product</i>! 🎉  \n✨ <u>Key Features:</u>  \n- Sleek design  \n- Cutting-edge technology  \n- Eco-friendly materials  \n💡 <span class=\"tg-spoiler\">Psst... There's a special surprise for early adopters!</span>  \n👉 <a href=\"http://www.example.com/\">Learn more here</a>  \n#NewProduct #Innovation #EcoFriendly\n```"
+        }
+      },
+      "id": "ec321a52-6ac7-42ca-bc67-bfb9402d503f",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1120, 560]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Listen for incoming events": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Correct errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scheduling Social Media Agent Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Image Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6e520c65-1565-4793-8af7-3ff6d34a8b66",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "***MASKED***"
+  },
+  "id": "***MASKED***",
+  "tags": []
+}

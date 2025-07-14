@@ -1,0 +1,785 @@
+{
+  "name": "Tutorial 2 - How I Built an AI Agent to Repurpose Podcasts into Engaging Threads (100% Automated)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Chuck Podcast",
+        "height": 533.2288788985635,
+        "width": 1312.796746297376,
+        "color": 5
+      },
+      "id": "0cfbb027-8a66-4c5c-886a-1e9e448ac1c8",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        280
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "40b45eb4-a840-4fdf-ac82-aae1e6b546f0",
+              "name": "podcst_url",
+              "value": "={{ $json.enclosure.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "93fd3a61-3cc2-4621-b9a8-0ff6f7211873",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.podcst_url }}",
+        "options": {}
+      },
+      "id": "569b820a-895f-48f8-ad2d-20ad2774631f",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        740,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3f31e0a4-7e37-4236-9cd3-985da599446d",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        1180,
+        540
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "c153cQPKpjkTXWPT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e3c3867d-5724-46a2-8bc7-f5a60e565ee9",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 100,
+        "options": {}
+      },
+      "id": "ff056f20-434b-4ba7-b428-ff580a164fba",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "0476f651-ef25-4fa5-b2fd-2c5c9b67a4b1",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        600,
+        1160
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "c153cQPKpjkTXWPT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a35447ad-5044-484b-ac35-a23bfdda070f",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "81d3f3dd-28ff-4704-ad57-f16478fcfd7f",
+      "name": "Map Universal",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        520,
+        980
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Map Universal').item.json.sessionId }}"
+      },
+      "id": "97ee2ceb-5d5c-4acc-b1d6-0f50f5af6b61",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [
+        740,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "name": "retrieve_podcast_transcript",
+        "description": "Retrieves Podcast Transcript of an episode Private Label Product\n"
+      },
+      "id": "472fabcc-668b-47ae-8ec3-a35163f59c0b",
+      "name": "Vector Store Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1,
+      "position": [
+        860,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-podcast",
+          "mode": "list",
+          "cachedResultName": "n8n-podcast"
+        },
+        "options": {}
+      },
+      "id": "835e4c5f-ea27-4cad-a97a-8a519189dedd",
+      "name": "Pinecone Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [
+        780,
+        1340
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "R8LXdEPFOnuQxQYT",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "af8952e4-144b-48de-81df-3e5de68eed66",
+      "name": "Embeddings OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        780,
+        1460
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "c153cQPKpjkTXWPT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c656da20-960c-4706-a005-b8d61d3bffab",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        1340
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "c153cQPKpjkTXWPT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {}
+      },
+      "id": "51017245-12f7-4ba3-871f-d5fda4dbb224",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        680,
+        980
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a19a7113-c590-467d-b09b-8b02c6c4be22",
+              "name": "account_id",
+              "value": "xxxxxxxxxxxxx",
+              "type": "string"
+            },
+            {
+              "id": "f12a7c5e-9366-477c-80e7-b0e670bb259c",
+              "name": "thread_text",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "95d875b2-ef23-4826-bea4-2be962ac0e28",
+      "name": "Edit Fields (Proxa)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        540,
+        1740
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "account_id",
+              "value": "={{ $json.account_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8d367316-2132-4402-81bd-ec36687f4f44",
+      "name": "MySQL",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        700,
+        1740
+      ],
+      "credentials": {
+        "mySql": {
+          "id": "vfrQ9dywKUvaUZm5",
+          "name": "Workflow MySQL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('MySQL').item.json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('MySQL').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "25226a8c-ff05-4e5e-abec-9febc249c550",
+      "name": "Post Thread Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1180,
+        1740
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "37b4a95f-111e-4983-abd2-bec434f914e1",
+      "name": "Wait Time",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        1740
+      ],
+      "webhookId": "66ffc7f1-1380-4b4a-867f-92b59a5ae849"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $json.threads_id }}/threads?media_type=TEXT&text={{ encodeURIComponent($('Edit Fields (Proxa)').item.json.thread_text) }}&access_token={{ $json.access_token }}",
+        "options": {}
+      },
+      "id": "7a6d5b62-c282-4204-9825-fbbd60eecdfd",
+      "name": "Create Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        860,
+        1740
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "983a06a1-cb72-4fa6-bab7-6e38cf2337fd",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        380,
+        1740
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03767225-a9d1-459d-a171-f6ef2cd6af64",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "14b58eb1-5476-4421-aa15-81750780e05d",
+      "name": "Return Value",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        1740
+      ]
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "feedUrl": "https://rss.art19.com/thoughts-on-the-market"
+      },
+      "id": "905cebfc-bf23-49a1-8991-ed0778e707fa",
+      "name": "RSS Feed Trigger",
+      "type": "n8n-nodes-base.rssFeedReadTrigger",
+      "typeVersion": 1,
+      "position": [
+        380,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "name": "Post_Twitter_Tool",
+        "description": "Call this tool to post twitter, the input should be a text string of the tweet",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "Cl9r3mQj6fgMiRkj"
+        },
+        "responsePropertyName": "status",
+        "jsonSchemaExample": ""
+      },
+      "id": "59bd94c7-7de7-4a2d-9c79-9d10508df849",
+      "name": "Call Send Threads",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        1180
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e98ef1e6-222c-48a6-90ab-7da95d808e85",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        360,
+        980
+      ],
+      "webhookId": "7db107b8-4611-4323-a143-83ddce21334a"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "ae6a2624-9c65-4bb0-a383-adf0398f3889",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        920,
+        380
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "c153cQPKpjkTXWPT",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-podcast",
+          "mode": "list",
+          "cachedResultName": "n8n-podcast"
+        },
+        "options": {}
+      },
+      "id": "bad46784-6d13-4d42-844d-e6b2db1a2f78",
+      "name": "Pinecone Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1,
+      "position": [
+        1160,
+        380
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "R8LXdEPFOnuQxQYT",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Send Thread",
+        "height": 338.858923066784,
+        "width": 1214.8110599129539
+      },
+      "id": "30fa737c-39b5-4abe-989c-9ed358e84020",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        1640
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Creator Agent",
+        "height": 732.9268115072014,
+        "width": 1068.938372297879,
+        "color": 4
+      },
+      "id": "47f19c95-b847-4872-a0a8-7695e23c895f",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        880
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Universal": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields (Proxa)": {
+      "main": [
+        [
+          {
+            "node": "MySQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Time": {
+      "main": [
+        [
+          {
+            "node": "Post Thread Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Thread": {
+      "main": [
+        [
+          {
+            "node": "Wait Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL": {
+      "main": [
+        [
+          {
+            "node": "Create Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields (Proxa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Thread Data": {
+      "main": [
+        [
+          {
+            "node": "Return Value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Send Threads": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feed Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Map Universal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "da6972b0-c61b-4341-a118-b19bd8136b61",
+  "meta": {
+    "templateId": "2249",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "Cl9r3mQj6fgMiRkj",
+  "tags": []
+}

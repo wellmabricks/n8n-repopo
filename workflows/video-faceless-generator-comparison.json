@@ -1,0 +1,1676 @@
+{
+  "name": "14.4 Faceless Video Generator Comparison (Minimax vs Hunyuan vs Kling)",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -860,
+        1220
+      ],
+      "id": "7025560e-ab47-4f10-bce1-623084c26109",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.minimaxi.chat/v1/video_generation",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "T2V-01-Director"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        420
+      ],
+      "id": "f6799fc5-c350-4cb7-a4e9-629ae3ebf50f",
+      "name": "Minimax",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "7E271Jqz1xrnXRws",
+          "name": "Minimax Andy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "59c96075-9035-4330-a180-b36ffda4786a",
+              "name": "prompt",
+              "value": " A tracking shot, with the subject centered in the frame, follows an ice skater gliding across an ice rink that appears to be floating amidst the clouds. The skater, clad in a flowing white costume that ripples with every move, exudes an ethereal grace. The camera smoothly keeps pace, capturing their every movement with a dreamlike quality. The background is a swirling canvas of pastel colors and soft, shifting clouds, creating a sense of otherworldly wonder. The skater's serene expression and the whisper-quiet sound of their blades on the ice add to the magical atmosphere. The overall impression is one of ethereal beauty and effortless movement, set against a backdrop of pure fantasy.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -660,
+        1220
+      ],
+      "id": "717b972c-1830-49d2-81ff-573d76e8ba53",
+      "name": "Prompt"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        700
+      ],
+      "id": "c8591321-8f19-4fd9-9b24-20b37cc8adc8",
+      "name": "Wait",
+      "webhookId": "2c5ad743-f8e4-43d7-9fad-412b0ed02bee",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/minimax/requests/{{ $('Minimax Video 01 Director - EN').item.json.request_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        700
+      ],
+      "id": "e6420780-d116-48c3-bd53-ed9deb541002",
+      "name": "Get Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aea9afcd-d17e-45f3-ab3a-2b7f1f6f0550",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        700
+      ],
+      "id": "fbd6caa1-ed17-4b32-be26-16dd89deec09",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/minimax/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        700
+      ],
+      "id": "3221d78f-95d4-48f8-b605-158154c4a91d",
+      "name": "Get Result",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        700
+      ],
+      "id": "a5bba150-746e-4fb4-861d-645c98b20ca6",
+      "name": "Download Video"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        1020
+      ],
+      "id": "bc5c5c23-b05a-4fcc-ac1a-d1335e24cc16",
+      "name": "Wait1",
+      "webhookId": "2c5ad743-f8e4-43d7-9fad-412b0ed02bee",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/minimax/requests/{{ $('Minimax Video 01 Director - CN').item.json.request_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        1020
+      ],
+      "id": "a001e73c-cbda-404d-87ca-b141210f08ab",
+      "name": "Get Status1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aea9afcd-d17e-45f3-ab3a-2b7f1f6f0550",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        1020
+      ],
+      "id": "3a13e2e3-aa8a-4d55-822f-f6a42e08f239",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/minimax/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        1020
+      ],
+      "id": "10c48c9f-39ac-40e2-909b-709b6d887d0c",
+      "name": "Get Result1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        1020
+      ],
+      "id": "889c660f-bc87-4bfc-81fb-da19e95b25cf",
+      "name": "Download Video1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/minimax/video-01-director",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.translatedText }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        1020
+      ],
+      "id": "840c2ca6-a4ef-4c62-b33c-3b24f579e2d9",
+      "name": "Minimax Video 01 Director - CN",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/minimax/video-01-director",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        700
+      ],
+      "id": "aae8cec0-41bf-4c03-9890-45bab8374d6a",
+      "name": "Minimax Video 01 Director - EN",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.prompt }}",
+        "translateTo": "zh-CN"
+      },
+      "type": "n8n-nodes-base.googleTranslate",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        1020
+      ],
+      "id": "85e6f4dc-602f-4e0b-b1e1-e3e7333abab6",
+      "name": "Google Translate",
+      "credentials": {
+        "googleTranslateOAuth2Api": {
+          "id": "5XyJyuzaTl3e5TEg",
+          "name": "Google Translate account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1340
+      ],
+      "id": "38b9ee63-543e-4bf2-ab0a-d8a49b415844",
+      "name": "Wait2",
+      "webhookId": "2c5ad743-f8e4-43d7-9fad-412b0ed02bee",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo2/requests/{{ $('Veo 2').item.json.request_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        1340
+      ],
+      "id": "81f7e227-0d87-4ef4-92cb-ce85acd11c56",
+      "name": "Get Status2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aea9afcd-d17e-45f3-ab3a-2b7f1f6f0550",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        1340
+      ],
+      "id": "d1901ea6-3a0f-4481-9003-03f2c6a58a48",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo2/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        1340
+      ],
+      "id": "38dba821-80a4-46a8-a940-1665dcd12265",
+      "name": "Get Result2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        1340
+      ],
+      "id": "f3a73527-817a-4280-b875-5d9a35811479",
+      "name": "Download Video2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/veo2",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        1340
+      ],
+      "id": "f9efa939-3b8f-4d79-895f-0ed4a6b958b6",
+      "name": "Veo 2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Fal.ai - Minimax Video 01 Director (EN) - 180.49s - $0.5",
+        "height": 300,
+        "width": 1620,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        640
+      ],
+      "id": "6dd27919-6f06-43a0-b660-f8c6f1b95502",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Fal.ai - Veo 2 - 63.4108s - Discount $1.25 (Original $2.5)",
+        "height": 300,
+        "width": 1620,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        1280
+      ],
+      "id": "cd7f918c-2aac-4508-a191-1b82436be1d4",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        1680
+      ],
+      "id": "74e3b126-9572-45b7-85d2-a868d5415f72",
+      "name": "Wait3",
+      "webhookId": "2c5ad743-f8e4-43d7-9fad-412b0ed02bee",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/hunyuan-video/requests/{{ $('Hunyuan Video').item.json.request_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        1680
+      ],
+      "id": "01ddb2e8-ab55-4279-a3ec-8914dde31dc0",
+      "name": "Get Status3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aea9afcd-d17e-45f3-ab3a-2b7f1f6f0550",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        1680
+      ],
+      "id": "7d898bb6-e3be-4d08-887d-84bc7bab4d44",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/hunyuan-video/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        1680
+      ],
+      "id": "31f447c9-2492-4f8d-8960-1a1d275c3134",
+      "name": "Get Result3",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        1680
+      ],
+      "id": "c78d3973-b800-4597-9767-e9b5b5f3af6a",
+      "name": "Download Video3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/hunyuan-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        1680
+      ],
+      "id": "c554be95-b73c-4242-a592-21a6ba34f329",
+      "name": "Hunyuan Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Fal.ai - Hunyuan Video - 190.76 - $0.4",
+        "height": 320,
+        "width": 1620,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        1600
+      ],
+      "id": "77362555-b936-4748-ac3c-e6c0b582d845",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        2020
+      ],
+      "id": "396cadf7-a601-41da-bf06-f14ff82f60a0",
+      "name": "Wait4",
+      "webhookId": "2c5ad743-f8e4-43d7-9fad-412b0ed02bee",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/kling-video/requests/{{ $('Kling 1.6 Pro').item.json.request_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        2020
+      ],
+      "id": "a08830a1-37b6-4711-b298-f3df13db2104",
+      "name": "Get Status4",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aea9afcd-d17e-45f3-ab3a-2b7f1f6f0550",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        2020
+      ],
+      "id": "19ec8789-4cc7-461a-9f9d-e95685cd63ff",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/kling-video/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        2020
+      ],
+      "id": "68510546-247f-4e2f-9866-f5d1af5b9092",
+      "name": "Get Result4",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.video.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        2020
+      ],
+      "id": "67c0a4b7-bc3f-4be3-8a37-76c5ed3d25de",
+      "name": "Download Video4"
+    },
+    {
+      "parameters": {
+        "content": "## Fal.ai - Kling Video v1.6 Pro - 235.02s - $0.1",
+        "height": 320,
+        "width": 1620,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        1940
+      ],
+      "id": "7f54b716-59fd-4b4e-a7ef-b7e0fe7b4baf",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/kling-video/v1.6/pro/text-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        2020
+      ],
+      "id": "dd349a6f-f315-4872-9d7f-ec425825ebb4",
+      "name": "Kling 1.6 Pro",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "VUR4FtFPj9OFngpy",
+          "name": "Fal AI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Fal.ai - Minimax Video 01 Director (CN) - 156.55s - $0.5",
+        "height": 300,
+        "width": 1620,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        960
+      ],
+      "id": "7b3e3c40-7fef-4c6d-be89-f6590ce37305",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        420
+      ],
+      "id": "ddebf1e2-9382-4b43-80ec-beceabd8c9ec",
+      "name": "Wait5",
+      "webhookId": "2c5ad743-f8e4-43d7-9fad-412b0ed02bee",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aea9afcd-d17e-45f3-ab3a-2b7f1f6f0550",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "Success",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        420
+      ],
+      "id": "ce1b1880-30ea-4a19-a851-c285cc9081ee",
+      "name": "If5"
+    },
+    {
+      "parameters": {
+        "url": "https://api.minimaxi.chat/v1/files/retrieve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "GroupId",
+              "value": "1887139960406938462"
+            },
+            {
+              "name": "file_id",
+              "value": "={{ $json.file_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "authority",
+              "value": "api.minimaxi.chat"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer ${api_key}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        420
+      ],
+      "id": "60ba6590-0e15-4cd3-a891-12c7c5732be4",
+      "name": "Get Result5",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "7E271Jqz1xrnXRws",
+          "name": "Minimax Andy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.file.download_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        420
+      ],
+      "id": "5b5c85b9-6d77-4f56-a19a-443320fd84c1",
+      "name": "Download Video5"
+    },
+    {
+      "parameters": {
+        "content": "## Minimax Video 01 Director - 123.98s - $0.43",
+        "height": 300,
+        "width": 1620,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        320
+      ],
+      "id": "8bbe2149-608c-4107-aa2f-7110dda4f04b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "url": "https://api.minimaxi.chat/v1/query/video_generation",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "task_id",
+              "value": "={{ $('Minimax').item.json.task_id }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        420
+      ],
+      "id": "4f3c3ea8-4ef4-4335-a95d-935627f0734c",
+      "name": "Get Status5",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "7E271Jqz1xrnXRws",
+          "name": "Minimax Andy"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Get Status": [
+      {
+        "json": {
+          "status": "COMPLETED",
+          "request_id": "4cebec68-565d-4475-a823-14a7b6b7bd48",
+          "response_url": "https://queue.fal.run/fal-ai/minimax/requests/4cebec68-565d-4475-a823-14a7b6b7bd48",
+          "status_url": "https://queue.fal.run/fal-ai/minimax/requests/4cebec68-565d-4475-a823-14a7b6b7bd48/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/minimax/requests/4cebec68-565d-4475-a823-14a7b6b7bd48/cancel",
+          "logs": null,
+          "metrics": {
+            "inference_time": 180.4859390258789
+          }
+        }
+      }
+    ],
+    "Get Result": [
+      {
+        "json": {
+          "video": {
+            "url": "https://fal.media/files/kangaroo/c-ZSsicWK6WmSVTO_HYf0_output.mp4",
+            "content_type": "video/mp4",
+            "file_name": "output.mp4",
+            "file_size": 1276651
+          }
+        }
+      }
+    ],
+    "Minimax Video 01 Director - EN": [
+      {
+        "json": {
+          "status": "IN_QUEUE",
+          "request_id": "4cebec68-565d-4475-a823-14a7b6b7bd48",
+          "response_url": "https://queue.fal.run/fal-ai/minimax/requests/4cebec68-565d-4475-a823-14a7b6b7bd48",
+          "status_url": "https://queue.fal.run/fal-ai/minimax/requests/4cebec68-565d-4475-a823-14a7b6b7bd48/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/minimax/requests/4cebec68-565d-4475-a823-14a7b6b7bd48/cancel",
+          "logs": null,
+          "metrics": {},
+          "queue_position": 0
+        }
+      }
+    ],
+    "Minimax Video 01 Director - CN": [
+      {
+        "json": {
+          "status": "IN_QUEUE",
+          "request_id": "8be81dbe-39f1-4a76-9f26-8588ec439a20",
+          "response_url": "https://queue.fal.run/fal-ai/minimax/requests/8be81dbe-39f1-4a76-9f26-8588ec439a20",
+          "status_url": "https://queue.fal.run/fal-ai/minimax/requests/8be81dbe-39f1-4a76-9f26-8588ec439a20/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/minimax/requests/8be81dbe-39f1-4a76-9f26-8588ec439a20/cancel",
+          "logs": null,
+          "metrics": {},
+          "queue_position": 0
+        }
+      }
+    ],
+    "Google Translate": [
+      {
+        "json": {
+          "translatedText": " 跟踪镜头以拍摄对象为中心，跟随一名滑冰运动员滑过似乎漂浮在云层中的溜冰场。滑冰运动员身着飘逸的白色服装，随着每个动作而起伏，散发出一种飘逸的优雅。相机平稳地保持着节奏，以梦幻般的质感捕捉他们的每一个动作。背景是一幅旋转的画布，色彩柔和，云朵飘动，营造出一种超凡脱俗的奇妙感。滑冰运动员平静的表情和冰刀在冰上发出的轻声细语的声音增添了魔幻的氛围。整体印象是一种飘逸的美感和轻松的动作，背景是纯粹的幻想。",
+          "detectedSourceLanguage": "en"
+        }
+      }
+    ],
+    "Get Status1": [
+      {
+        "json": {
+          "status": "COMPLETED",
+          "request_id": "8be81dbe-39f1-4a76-9f26-8588ec439a20",
+          "response_url": "https://queue.fal.run/fal-ai/minimax/requests/8be81dbe-39f1-4a76-9f26-8588ec439a20",
+          "status_url": "https://queue.fal.run/fal-ai/minimax/requests/8be81dbe-39f1-4a76-9f26-8588ec439a20/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/minimax/requests/8be81dbe-39f1-4a76-9f26-8588ec439a20/cancel",
+          "logs": null,
+          "metrics": {
+            "inference_time": 156.54938101768494
+          }
+        }
+      }
+    ],
+    "Get Result1": [
+      {
+        "json": {
+          "video": {
+            "url": "https://fal.media/files/panda/DXXplR_Ge3Nj-kCKmZjs6_output.mp4",
+            "content_type": "video/mp4",
+            "file_name": "output.mp4",
+            "file_size": 1112560
+          }
+        }
+      }
+    ],
+    "Veo 2": [
+      {
+        "json": {
+          "status": "IN_QUEUE",
+          "request_id": "fc846d50-16b9-4095-a5de-c9c770dbe530",
+          "response_url": "https://queue.fal.run/fal-ai/veo2/requests/fc846d50-16b9-4095-a5de-c9c770dbe530",
+          "status_url": "https://queue.fal.run/fal-ai/veo2/requests/fc846d50-16b9-4095-a5de-c9c770dbe530/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/veo2/requests/fc846d50-16b9-4095-a5de-c9c770dbe530/cancel",
+          "logs": null,
+          "metrics": {},
+          "queue_position": 0
+        }
+      }
+    ],
+    "Get Result2": [
+      {
+        "json": {
+          "video": {
+            "url": "https://v3.fal.media/files/panda/_jQ5YjWamjnX3hQMRw3eF_output.mp4",
+            "file_name": "output.mp4",
+            "file_size": 1466825,
+            "content_type": "video/mp4"
+          }
+        }
+      }
+    ],
+    "Hunyuan Video": [
+      {
+        "json": {
+          "status": "IN_QUEUE",
+          "request_id": "e3b71127-04fd-47c8-830f-aabbc4641153",
+          "response_url": "https://queue.fal.run/fal-ai/hunyuan-video/requests/e3b71127-04fd-47c8-830f-aabbc4641153",
+          "status_url": "https://queue.fal.run/fal-ai/hunyuan-video/requests/e3b71127-04fd-47c8-830f-aabbc4641153/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/hunyuan-video/requests/e3b71127-04fd-47c8-830f-aabbc4641153/cancel",
+          "logs": null,
+          "metrics": {},
+          "queue_position": 0
+        }
+      }
+    ],
+    "Get Status3": [
+      {
+        "json": {
+          "status": "COMPLETED",
+          "request_id": "e3b71127-04fd-47c8-830f-aabbc4641153",
+          "response_url": "https://queue.fal.run/fal-ai/hunyuan-video/requests/e3b71127-04fd-47c8-830f-aabbc4641153",
+          "status_url": "https://queue.fal.run/fal-ai/hunyuan-video/requests/e3b71127-04fd-47c8-830f-aabbc4641153/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/hunyuan-video/requests/e3b71127-04fd-47c8-830f-aabbc4641153/cancel",
+          "logs": null,
+          "metrics": {
+            "inference_time": 190.76247692108154
+          }
+        }
+      }
+    ],
+    "Get Result3": [
+      {
+        "json": {
+          "video": {
+            "url": "https://v3.fal.media/files/panda/1_WeSkHiS-Ky29jkdIE5q_video-1740719594.mp4",
+            "content_type": "application/octet-stream",
+            "file_name": "video-1740719594.mp4",
+            "file_size": 349880
+          },
+          "seed": 829
+        }
+      }
+    ],
+    "Kling 1.6 Pro": [
+      {
+        "json": {
+          "status": "IN_QUEUE",
+          "request_id": "bb0a587d-dfa1-4752-9d28-127ef6d42d69",
+          "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/bb0a587d-dfa1-4752-9d28-127ef6d42d69",
+          "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/bb0a587d-dfa1-4752-9d28-127ef6d42d69/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/bb0a587d-dfa1-4752-9d28-127ef6d42d69/cancel",
+          "logs": null,
+          "metrics": {},
+          "queue_position": 0
+        }
+      }
+    ],
+    "Get Status4": [
+      {
+        "json": {
+          "status": "COMPLETED",
+          "request_id": "bb0a587d-dfa1-4752-9d28-127ef6d42d69",
+          "response_url": "https://queue.fal.run/fal-ai/kling-video/requests/bb0a587d-dfa1-4752-9d28-127ef6d42d69",
+          "status_url": "https://queue.fal.run/fal-ai/kling-video/requests/bb0a587d-dfa1-4752-9d28-127ef6d42d69/status",
+          "cancel_url": "https://queue.fal.run/fal-ai/kling-video/requests/bb0a587d-dfa1-4752-9d28-127ef6d42d69/cancel",
+          "logs": null,
+          "metrics": {
+            "inference_time": 235.01611304283142
+          }
+        }
+      }
+    ],
+    "Get Result4": [
+      {
+        "json": {
+          "video": {
+            "url": "https://v3.fal.media/files/tiger/7dcgr43YwkMPzbIur9zsT_output.mp4",
+            "content_type": "video/mp4",
+            "file_name": "output.mp4",
+            "file_size": 2017105
+          }
+        }
+      }
+    ],
+    "Minimax": [
+      {
+        "json": {
+          "task_id": "242351230341257",
+          "base_resp": {
+            "status_code": 0,
+            "status_msg": "success"
+          }
+        }
+      }
+    ],
+    "Get Result5": [
+      {
+        "json": {
+          "file": {
+            "file_id": 242350918045994,
+            "bytes": 0,
+            "created_at": 1740720857,
+            "filename": "output.mp4",
+            "purpose": "video_generation",
+            "download_url": "https://public-cdn-video-data-algeng.oss-cn-wulanchabu.aliyuncs.com/inference_output%2Fvideo%2F2025-02-28%2F4eb7a13f-ac3a-478c-892c-ee727b790488%2Foutput.mp4?Expires=1740753673&OSSAccessKeyId=LTAI5tAmwsjSaaZVA6cEFAUu&Signature=Zjr6vR8yysOQB5pSZLeDptvfBms%3D"
+          },
+          "base_resp": {
+            "status_code": 0,
+            "status_msg": "success"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Result": {
+      "main": [
+        [
+          {
+            "node": "Download Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get Status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Get Result1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Result1": {
+      "main": [
+        [
+          {
+            "node": "Download Video1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Minimax Video 01 Director - CN": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Minimax Video 01 Director - EN": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Translate": {
+      "main": [
+        [
+          {
+            "node": "Minimax Video 01 Director - CN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Get Status2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Get Result2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Result2": {
+      "main": [
+        [
+          {
+            "node": "Download Video2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Veo 2": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Get Status3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status3": {
+      "main": [
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Get Result3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Result3": {
+      "main": [
+        [
+          {
+            "node": "Download Video3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hunyuan Video": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait4": {
+      "main": [
+        [
+          {
+            "node": "Get Status4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status4": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Get Result4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Result4": {
+      "main": [
+        [
+          {
+            "node": "Download Video4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kling 1.6 Pro": {
+      "main": [
+        [
+          {
+            "node": "Wait4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait5": {
+      "main": [
+        [
+          {
+            "node": "Get Status5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If5": {
+      "main": [
+        [
+          {
+            "node": "Get Result5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Minimax": {
+      "main": [
+        [
+          {
+            "node": "Wait5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Result5": {
+      "main": [
+        [
+          {
+            "node": "Download Video5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status5": {
+      "main": [
+        [
+          {
+            "node": "If5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "50337383-b485-4594-bda9-a1ab120bc07f",
+  "meta": {
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "7yX8F7ve0PiNBhgU",
+  "tags": []
+}

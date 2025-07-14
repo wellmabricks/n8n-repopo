@@ -1,0 +1,1152 @@
+{
+  "name": "Tutorial 14.4 - Pinterest Automation: Get Free Traffic with n8n (No Ads Needed)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9da72f05-fbe1-41c1-88d3-c40903d6cccb",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [780, 280],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://api.screenshotone.com/take?url={{ encodeURIComponent($json['Preview Link']) }}&viewport_width=1080&viewport_height=1920&format=jpg&block_ads=true&block_cookie_banners=true&block_banners_by_heuristics=false&block_trackers=true&delay=0&timeout=60&response_type=by_format&image_quality=80",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "5f0a51c1-8bab-4500-be0b-0028d1efcee9",
+      "name": "Request Screenshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 1040],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "***************",
+          "name": "Screenshot API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "af14a647-b7e0-4ee5-879b-356b91230f23",
+              "name": "Preview Link",
+              "value": "https://api.andynocode.com/preview/pinterest/1",
+              "type": "string"
+            },
+            {
+              "id": "63b3da8e-e927-4375-a4a1-aac3d6187759",
+              "name": "Post Topic",
+              "value": "Fitness Tips",
+              "type": "string"
+            },
+            {
+              "id": "b69c02a1-e4fe-4419-a593-45667dc7e40f",
+              "name": "Unique ID",
+              "value": "={{ $now.valueOf() }}",
+              "type": "string"
+            },
+            {
+              "id": "f6a45f3f-4d64-412d-93e1-e750780dde5b",
+              "name": "Website URL",
+              "value": "https://andyhealthy.com",
+              "type": "string"
+            },
+            {
+              "id": "88b2c3c2-56f1-49cf-be6e-80e725c2362c",
+              "name": "Total Image",
+              "value": "5",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4039cdd0-1ee5-410c-8947-cd41eea0d33a",
+      "name": "Global Variable",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 280]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "438af7f4-cc3f-46c9-a0ec-1974752dd642",
+              "name": "Preview Link",
+              "value": "={{ $('Global Variable').first().json['Preview Link'] }}?headingTop={{ $('Generate Pinterest Data').last().json.output.headingTop }}&headingBottom={{ $('Generate Pinterest Data').last().json.output.headingBottom }}&websiteUrl={{ $('Global Variable').first().json['Website URL'] }}&imageUrl={{ $json['Image Link'] }}&steps={{ encodeURIComponent(JSON.stringify($('Generate Pinterest Data').last().json.output.steps)) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ecef732f-5b9c-463b-9612-dc24703b18c9",
+      "name": "Preview Link",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [940, 1040]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1l5a1q0Bilvs9jITQY1RM9ZIatAJd23l3VgcQ5LMHJiI",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Flux Image Link": "=https://{{ $json.bucket }}.storage.googleapis.com/image-{{ $('Global Variable').first().json['Unique ID'] }}-{{ $runIndex + 1 }}.jpeg",
+            "Caption": "={{ $('Generate Pinterest Data').last().json.output.imageDescription }}",
+            "Pinterest Image Link": "=https://{{ $json.bucket }}.storage.googleapis.com/screenshot-{{ $('Global Variable').first().json['Unique ID'] }}-{{ $runIndex + 1 }}.jpeg",
+            "Preview": "={{ `=IMAGE(B${$runIndex + 2}, 2)` }}",
+            "Title": "={{ $('Generate Pinterest Data').last().json.output.imageTitle }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Flux Image Link",
+              "displayName": "Flux Image Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pinterest Image Link",
+              "displayName": "Pinterest Image Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Date",
+              "displayName": "Post Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preview",
+              "displayName": "Preview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "40bbd6fd-3e5b-4503-ac36-30f2195ca388",
+      "name": "Update Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1400, 1040],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "***************",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Get Fitness Content Idea from Claude 3.7 Sonnet from OpenRouter\n",
+        "height": 355.92026732594024,
+        "width": 1622.10501987582,
+        "color": 3
+      },
+      "id": "eb023926-07c1-4fd8-93f2-6b576df941ae",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [760, 220]
+    },
+    {
+      "parameters": {
+        "content": "## Create Pinterest Image with Flux\n",
+        "height": 352.7124315807995,
+        "width": 913.563501901684,
+        "color": 4
+      },
+      "id": "1f08bf3d-a032-4bf3-a2fd-74cc86b33005",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [760, 600]
+    },
+    {
+      "parameters": {
+        "content": "## Create Pinterest Post",
+        "height": 230.23525895608736,
+        "width": 829.6743581920589
+      },
+      "id": "e4c817e6-0d7e-4bd3-9956-372d67055a9d",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [760, 980]
+    },
+    {
+      "parameters": {
+        "resource": "object",
+        "operation": "create",
+        "bucketName": "n8n-pinterest",
+        "objectName": "=screenshot-{{ $('Global Variable').first().json['Unique ID'] }}-{{ $runIndex + 1 }}.jpeg",
+        "createData": {},
+        "createQuery": {},
+        "encryptionHeaders": {},
+        "requestOptions": {}
+      },
+      "id": "997eae6f-e89f-4a2a-bdc0-91a59f0cbab5",
+      "name": "Save Screenshot",
+      "type": "n8n-nodes-base.googleCloudStorage",
+      "typeVersion": 1,
+      "position": [1260, 1040],
+      "credentials": {
+        "googleCloudStorageOAuth2Api": {
+          "id": "***************",
+          "name": "Google Cloud Storage account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"headingTop\": \"Daily Hacks\",\n  \"headingBottom\": \"Share Your Wins\",\n  \"steps\": [\n    {\n      \"number\": \"1\",\n      \"text\": \"Hydrate first thing. Drink water to kickstart metabolism.\"\n    },\n    {\n      \"number\": \"2\",\n      \"text\": \"Write 3 goals—keep your day focused.\"\n    },\n    {\n      \"number\": \"3\",\n      \"text\": \"Stretch for 5 mins—boost energy instantly.\"\n    }\n  ],\n  \"imageTitle\": \"Fitness 10 Tips\",\n  \"imageDescription\": \"Transform your fitness journey with AndyHealthy.com! Whether you're just starting out or looking to take your workouts to the next level, AndyHealthy offers expert guidance, personalized plans, and top-notch resources to help you achieve your health goals. From nutrition tips to effective exercise routines, discover everything you need to stay motivated and energized. Visit https://andyhealthy.com today and take the first step toward a stronger, healthier, and happier you!\"\n}"
+      },
+      "id": "67dfc08b-a516-4aeb-8ce9-c4dadaa793b7",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [1780, 440]
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "output.choices[0].image_base64",
+        "options": {}
+      },
+      "id": "c67d2b31-8d94-40c3-aa6d-c4348ef57ff2",
+      "name": "Convert to Image",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [1340, 720]
+    },
+    {
+      "parameters": {
+        "resource": "object",
+        "operation": "create",
+        "bucketName": "n8n-pinterest",
+        "objectName": "=image-{{ $('Global Variable').first().json['Unique ID'] }}-{{ $runIndex + 1 }}.jpeg",
+        "createData": {},
+        "createQuery": {},
+        "encryptionHeaders": {},
+        "requestOptions": {}
+      },
+      "id": "b4fc751a-78bc-4e14-a9e8-1a0441094122",
+      "name": "Save Image",
+      "type": "n8n-nodes-base.googleCloudStorage",
+      "typeVersion": 1,
+      "position": [1500, 720],
+      "credentials": {
+        "googleCloudStorageOAuth2Api": {
+          "id": "***************",
+          "name": "Google Cloud Storage account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2dadfbe8-7de3-43c6-b440-a047ad11b359",
+              "name": "Image Link",
+              "value": "=https://{{ $json.bucket }}.storage.googleapis.com/image-{{ $('Global Variable').first().json['Unique ID'] }}-{{ $runIndex + 1 }}.jpeg",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "55dcfe7b-18ac-4439-9d2c-5db0c40866d0",
+      "name": "Image URL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, 1040]
+    },
+    {
+      "parameters": {
+        "model": "=anthropic/claude-3.7-sonnet",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "39eab7e1-692c-4fd0-aa9c-0325122c29c1",
+      "name": "Claude 3.7 Sonnet",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [1600, 440],
+      "credentials": {
+        "openAiApi": {
+          "id": "***************",
+          "name": "Open Router"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "=anthropic/claude-3.7-sonnet",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "id": "a749e12c-7d4f-4d23-aca7-9a8fd076d499",
+      "name": "Claude 3.7 Sonnet1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [1940, 440],
+      "credentials": {
+        "openAiApi": {
+          "id": "***************",
+          "name": "Open Router"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"prompt\": \"A hyperrealistic 8K close-up of a freshly sliced papaya, its orange flesh glistening with dewy moisture, black seeds exposed, against a stark white background. Studio lighting with soft shadows, ultra-sharp focus on the fruit's fibrous texture.\",\n  \"food\": \"papaya\"\n}"
+      },
+      "id": "eaf5393a-a7ea-4295-947f-ed09d9132968",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [2100, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "const globalVariables = $input.all();\nconst totalImage = Number(globalVariables[0]?.json[\"Total Image\"]);\nconst resultArray = Array(totalImage)\n  .fill(null)\n  .map((_, index) => ({ index }));\n\nreturn { resultArray };\n"
+      },
+      "id": "59eaec44-50c6-4f78-ac20-576d258ab2b1",
+      "name": "Create Image Loop",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 280]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "resultArray",
+        "options": {}
+      },
+      "id": "06dafb81-da4a-480c-8783-8c86b369a8c6",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [1260, 280]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85baf1f4-4690-434a-8826-69f24748be46",
+              "name": "Used Fruit",
+              "value": "={{ $json['Food List'] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "35b091a6-8b6b-46ae-8093-d87ac803e31d",
+      "name": "Set Previous Food",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1020, 720]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1bc83b78-f1e0-4fc0-b2f3-b4e17842d9ff",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7d5ead28-aaa0-4fa8-a5a0-5a8044ce6b94",
+      "name": "IF First Item",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2240, 420]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "0ac97d1c-c9d4-4cea-9b80-d9a0105795ff",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1440, 280]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ca6eb692-5ef2-4db4-a202-0fd9b285901e",
+              "name": "Food List",
+              "value": "=[{{ JSON.stringify($json.output.food) }}]",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4ba241bb-cc2b-465d-a09c-ab96e8568cec",
+      "name": "Set First Food",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, 640]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ca6eb692-5ef2-4db4-a202-0fd9b285901e",
+              "name": "Food List",
+              "value": "={{ $('Set Previous Food').last().json[\"Used Fruit\"].concat([JSON.stringify($json.output.food)]) }}",
+              "type": "array"
+            },
+            {
+              "id": "b85f5c79-fcb8-46aa-be2b-f0ebb9e2d793",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3c4eb0da-204f-4675-a3b9-db73d6fce6f3",
+      "name": "Set Next Food",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [800, 800]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-sandbox.pinterest.com/v5/pins",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": {{ JSON.stringify($('Get Post').item.json.Title) }},\n  \"description\": {{ JSON.stringify($('Get Post').item.json.Caption) }},\n  \"board_id\": {{ JSON.stringify($json['Board ID']) }},\n  \"media_source\": {\n    \"source_type\": \"image_url\",\n    \"url\": {{ JSON.stringify($('Get Post').item.json['Pinterest Image Link']) }}\n  }\n}",
+        "options": {}
+      },
+      "id": "edce557a-ac26-45f7-8db5-abe0535dd7c2",
+      "name": "Create Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1640, 1300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***************",
+          "name": "Pinterest"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1l5a1q0Bilvs9jITQY1RM9ZIatAJd23l3VgcQ5LMHJiI",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f81aef85-e84e-4c9e-9100-194bcedec3cd",
+      "name": "Get Post",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1320, 1300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "***************",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Create pinterest upload",
+        "height": 235.5532382138723,
+        "width": 1218.844206185371,
+        "color": 6
+      },
+      "id": "c8bcc773-943b-403f-8e49-4011f8d3553f",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [760, 1240]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{}]
+        }
+      },
+      "id": "efc73bf1-046e-4cd2-bd41-465265381459",
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [1160, 1300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-sandbox.pinterest.com/v5/boards",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"name\": \"Fitness Top Tips\",\n  \"description\": \"Here is a list of Fitness Tips\",\n  \"privacy\": \"PUBLIC\"\n}",
+        "options": {}
+      },
+      "id": "69b28585-9b71-4988-810f-731c4335abef",
+      "name": "Create Board",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 1300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***************",
+          "name": "Pinterest"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1l5a1q0Bilvs9jITQY1RM9ZIatAJd23l3VgcQ5LMHJiI",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Get Post').item.json.row_number }}",
+            "Post Date": "={{ $now }}",
+            "Status": "Posted"
+          },
+          "matchingColumns": ["row_number"],
+          "schema": [
+            {
+              "id": "Flux Image Link",
+              "displayName": "Flux Image Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pinterest Image Link",
+              "displayName": "Pinterest Image Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Title",
+              "displayName": "Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Caption",
+              "displayName": "Caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Date",
+              "displayName": "Post Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preview",
+              "displayName": "Preview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1bf6dbf3-bd30-433c-b8c3-40db2bd24634",
+      "name": "Update Post",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1800, 1300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "***************",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Act as an expert prompt engineer for hyperrealistic food photography. Generate a detailed image prompt for a healthy food item, adhering to these rules:\n\n1. Core Subject: A single healthy food or dish (e.g., fruit, vegetable, grain, salad, smoothie bowl, etc.). Use [food] as a placeholder.\n2. Style: Hyperrealistic, clinical sharpness, lifelike textures (e.g., glistening, dewy, or crisp surfaces).\n3. Composition:\n- [food] centered on a pure white background (HEX #FFFFFF, no shadows/textures).\n- No props, utensils, or distractions—focus only on the food.\n- Shallow depth of field, extreme detail on the subject.\n4. Lighting: Soft, diffused light to highlight textures and create subtle shadows for 3D realism.\n5. Mood: Fresh, vibrant, and appetizing. Use vivid descriptors (e.g., 'juicy watermelon with ruby-red flesh and glistening seeds').\n6. Optional Additions: Add creative details like 'water droplets', 'fresh herbs', 'nut toppings', or 'natural imperfections' if relevant.\n7. Don't use the food previously used.\n\nOutput Format:\n- Return the final prompt and the food in JSON format.\n- Replace [food] with a specific item (e.g., 'avocado half with a pit', 'rainbow Buddha bowl').\n- Include 1-2 technical terms ('macro photography', 'volumetric lighting').\n\nOutput JSON Format:\n```json```\n{\n  \"prompt\": \"string (30 - 50 Prompt Text)\",\n  \"food\": \"string (1 - 5 Food Text)\",\n}\n```json```\n\nExamples for Inspiration:\nExample 1:\n{\n  \"prompt\": \"A hyperrealistic close-up of a freshly sliced papaya, its orange flesh glistening with dewy moisture, black seeds exposed, against a stark white background. Studio lighting with soft shadows, ultra-sharp focus on the fruit's fibrous texture.\",\n  \"food\": \"papaya\"\n}\nExample 2:\n{\n  \"prompt\": A vibrant acai bowl in resolution, topped with blueberries, granola, and coconut flakes, hyperdetailed with visible texture contrasts (creamy vs. crunchy) on a pure white backdrop. Diffused light emphasizes the bowl's frosty surface.\",\n  \"food\": \"acai bowl\"\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "=Previous Food: {{ $runIndex > 0 ? JSON.stringify($('Set Previous Food').last().json[\"Used Fruit\"]) : \"\" }}"
+            }
+          ]
+        }
+      },
+      "id": "b8478fee-cca4-4c2a-98b1-4cdb75c6ebba",
+      "name": "Generate Pinterest Image Prompt",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [1920, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.together.xyz/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"black-forest-labs/FLUX.1-schnell\",\n  \"prompt\": {{ JSON.stringify($('Generate Pinterest Image Prompt').last().json.output.prompt) }},\n  \"negative_prompt\": \"text, watermark, signature, paragraph, wording, letters, symbols, writing, nude, nudity, explicit content, obscene, inappropriate, offensive, forbidden, illegal, prohibited, sexual, graphic, violence, gore, blood, disturbing\",\n  \"width\": 1008,\n  \"height\": 1792,\n  \"steps\": 4,\n  \"n\": 1,\n  \"response_format\": \"b64_json\"\n}",
+        "options": {}
+      },
+      "id": "1ff2ff18-d438-4600-a2ab-eabc7946534d",
+      "name": "Get Image Base 64 with Flux",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1180, 720],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***************",
+          "name": "Together AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "Board ID",
+        "key": "Board ID",
+        "options": {}
+      },
+      "id": "b99fdf9d-59f9-4e3f-be7a-44439a9ae059",
+      "name": "Get Board ID",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1480, 1300],
+      "credentials": {
+        "redis": {
+          "id": "***************",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "Board ID",
+        "value": "={{ $json.id }}"
+      },
+      "id": "97be1084-9f77-4515-b88e-e5e67e389e54",
+      "name": "Set Board ID",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [960, 1300],
+      "credentials": {
+        "redis": {
+          "id": "***************",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create an engaging Pinterest posts that highlights the following content in a bold, concise, and visually appealing format. Use vibrant language and a friendly tone. Structure the story as follows:\n\nTop Headings: Display 2-3 short, catchy title texts at the top of the story (e.g. Boost Your Day). Don't include any punctuations.\n\nBottom Headings: Display 2-3 punchy closing phrases at the bottom (e.g. Save for later. Align text to stand out against the background. Don't include any punctuations.\n\nSteps Section: If steps are included, list them in order with clear numbering. Format each step as:\n{\n  number: string (1,2,3 accordingly);\n  text: string (20 words key point);\n}\nTotal number of steps should be less than or equal to 3\n(e.g. \n{\n  number: 1,\n  text: Start with a 5-minute meditation to calm your mind;\n}\n)\nImage Description: Create 100 words maximum image description for Pinterest.\n\nOutput Format:\n```json```\n{\n  \"headingTop\": \"string (2-3 Title Text)\",\n  \"headingBottom\": \"string (2-3 Title Text)\",\n  \"steps\": [\n    {\n      \"number\": \"string (1, 2, 3)\",\n      \"text\": \"string (20-word key point)\"\n    }\n  ],\n  \"imageTitle\": \"string (10 to 50 Description Text)\",\n  \"imageDescription\": \"string (10 to 100 Description Text)\",\n}\n```json```\n\nVisual Guidelines:\n- Prioritize readability (large text for headings, smaller for steps).\n- Keep the tone consistent and avoid clutter.\n- Don't add any punctuations.\n- Don't add any emoji.\n\nTone: Friendly, motivational, and energetic. Avoid jargon.\n\nExample Output:\n```json```\n{\n  \"headingTop\": \"Daily Hacks\",\n  \"headingBottom\": \"Share Your Wins\",\n  \"steps\": [\n    {\n      \"number\": \"1\",\n      \"text\": \"Hydrate first thing. Drink water to kickstart metabolism.\"\n    },\n    {\n      \"number\": \"2\",\n      \"text\": \"Write 3 goals—keep your day focused.\"\n    },\n    {\n      \"number\": \"3\",\n      \"text\": \"Stretch for 5 mins—boost energy instantly.\"\n    }\n  ],\n  \"imageTitle\": \"Fitness 10 Tips\",\n  \"imageDescription\": \"Transform your fitness journey with AndyHealthy.com! Whether you're just starting out or looking to take your workouts to the next level, AndyHealthy offers expert guidance, personalized plans, and top-notch resources to help you achieve your health goals. From nutrition tips to effective exercise routines, discover everything you need to stay motivated and energized. Visit https://andyhealthy.com today and take the first step toward a stronger, healthier, and happier you!\"\n}\n```json```",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "=Topic: {{ $json['Post Topic'] }}"
+            }
+          ]
+        }
+      },
+      "id": "d092a647-ca99-413a-8c12-eabca17346f0",
+      "name": "Generate Pinterest Data",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [1600, 280]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Global Variable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Screenshot": {
+      "main": [
+        [
+          {
+            "node": "Save Screenshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Global Variable": {
+      "main": [
+        [
+          {
+            "node": "Create Image Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preview Link": {
+      "main": [
+        [
+          {
+            "node": "Request Screenshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Screenshot": {
+      "main": [
+        [
+          {
+            "node": "Update Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Pinterest Data",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Image": {
+      "main": [
+        [
+          {
+            "node": "Save Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Image": {
+      "main": [
+        [
+          {
+            "node": "Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image URL": {
+      "main": [
+        [
+          {
+            "node": "Preview Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude 3.7 Sonnet": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Pinterest Data",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude 3.7 Sonnet1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Pinterest Image Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Pinterest Image Prompt",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Image Loop": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Generate Pinterest Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF First Item": {
+      "main": [
+        [
+          {
+            "node": "Set First Food",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Next Food",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Previous Food": {
+      "main": [
+        [
+          {
+            "node": "Get Image Base 64 with Flux",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set First Food": {
+      "main": [
+        [
+          {
+            "node": "Set Previous Food",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Next Food": {
+      "main": [
+        [
+          {
+            "node": "Set Previous Food",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Post": {
+      "main": [
+        [
+          {
+            "node": "Get Board ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Board": {
+      "main": [
+        [
+          {
+            "node": "Set Board ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Media": {
+      "main": [
+        [
+          {
+            "node": "Update Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Pinterest Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "IF First Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Image Base 64 with Flux": {
+      "main": [
+        [
+          {
+            "node": "Convert to Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Board ID": {
+      "main": [
+        [
+          {
+            "node": "Create Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Pinterest Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Pinterest Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Record": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ce22c195-77dd-4d62-af5c-f5c17bc15ba1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "Akeejrd5tpZbYIHp",
+  "tags": []
+}

@@ -1,0 +1,700 @@
+{
+  "name": "Tutorial 17.2 - Faceless AI Workflow: Retro-Future Jazz Music Videos  For $5k/mo Fully Automated (n8n No-code Template)",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-chat",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [180, 300],
+      "id": "f257b960-17e3-4211-9dc0-e5d1c33ba7fb",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "***MASKED***",
+          "name": "OpenRouter"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"image_prompt_list\": [\"A retrofuturism portrait of a confident 1950s-inspired man in a sleek, mustard-yellow jumpsuit with a high collar, centered in the frame, gazing directly at the camera. He stands in a futuristic kitchen with pastel pink and mint green cabinetry, a chrome-plated refrigerator, and a glowing holographic recipe interface floating in the air. A small robot assistant with a retro design is holding a tray of futuristic food. An Art Deco chandelier hangs above a circular dining table with a metallic finish. The backdrop is clean and pastel, with geometric patterns on the walls.\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [340, 300],
+      "id": "10bca28b-7ef4-453f-a266-ffa531fc75a0",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate [{{ $('Configuration').item.json['Number of Video'] }}] retro-futuristic 1950s scenes with subtle tunings (e.g., gender/role adjustments). Maintain black-and-white styling and atomic-age optimism.\"\n\nAI Process:\n\nRandomly select [n] prompts from the 4 provided (repeats allowed if [n] > 4).\n\nApply subtle tunings (e.g., swap male/female roles, modify clothing details, adjust character dynamics).\n\nPreserve core elements: black-and-white palette, retro-futuristic tech, mid-century design, cosmic/utopian themes.\n\nReturn as JSON array with tuned prompts.\n\nExample Output (for n=2):\n\n```json```\n{\n  \"image_prompt_list\": [\"A sharply dressed **woman** in a sleek 1950s-style white suit and pearl necklace soars above a mid-century suburban street, propelled by chrome jet thrusters. Her victory-rolled hair gleams as she glides confidently past vintage cars below, thrusters glowing with atomic-age energy. Black-and-white tones evoke classic sci-fi futurism.\",\n  \"A glamorous **male astronaut** with 1950s Hollywood charm reclines aboard a retro spacecraft, wearing a tailored satin jumpsuit with metallic accents. He casually reads a pulp sci-fi magazine while jagged alien terrain unfolds outside the porthole. Analog dials and curved interior details reflect atomic-age optimism, rendered in monochrome elegance.\"\n  ]\n}\n```json```\n\nKey Tuning Principles:\n\nGender/Role Swaps: Maintain era-appropriate styling (e.g., suits → tailored dresses/jumpsuits, swapped accessories).\n\nScene Focus: Alternate between cosmic/domestic settings while keeping retro tech (jet thrusters, analog panels).\n\nCharacter Dynamics: Adjust group compositions (e.g., solo flyer → parent-child duo) without losing narrative warmth.\n\nThis system ensures thematic consistency while allowing dynamic variations inspired by the original prompts.\n\nSAMPLE PROMPT 1:\nA stylish 1950s-inspired retro-futuristic lounge set aboard a luxury spaceship, bathed in soft ambient lighting. A well-dressed couple, a woman in an elegant shimmering evening gown with a pearl necklace and a man in a sharp white suit, are engaged in a charming conversation. They sit on a sleek, curved leather couch, surrounding a futuristic, glowing table with an intricate digital interface. The large panoramic window behind them reveals a breathtaking cosmic view—distant stars, swirling galaxies, and glowing nebulae. The lounge is decorated with metallic accents, chrome furniture, and sparkling futuristic ornaments, evoking the optimism of mid-century sci-fi. The black-and-white aesthetic, reminiscent of classic Hollywood space-age films, enhances the nostalgic, dreamlike quality of the scene. The overall composition reflects a blend of atomic-age design and utopian futurism, capturing a vision of the future as imagined in the golden age of science fiction.\n\nSAMPLE PROMPT 2:\nA sharply dressed man in a sleek 1950s-style black suit, white shirt, and slim tie soars above a classic mid-century suburban street, propelled by two futuristic, chrome-plated jet thrusters attached to his hands. His hair is neatly combed in a vintage style, and his expression is one of confidence and focus as he glides effortlessly through the air. The scene is captured in striking black-and-white, evoking the aesthetic of classic science fiction films from the atomic age. Below, vintage automobiles and palm-lined streets stretch into the distance, a perfect blend of mid-century Americana and optimistic futurism. The jet thrusters emit a soft glow, their sleek design inspired by 1950s sci-fi illustrations, featuring smooth curves, metallic finishes, and glowing energy cores. The overall composition reflects a \"future as imagined in the past\" feel, seamlessly blending nostalgia with advanced technology in a retro-futuristic utopian world.\n\nSAMPLE PROMPT 3:\nA sophisticated mid-century family—composed of a well-dressed father, mother, and two young children—enjoys a luxurious flight aboard a retro-futuristic spacecraft. The father, in a sharp dark suit with a crisp white shirt and slim tie, sits in a plush, high-backed seat, holding his daughter, who is wrapped in a cozy coat. The mother, in a sparkling vintage dress with elegant earrings and perfectly styled curls, sits beside their son, both smiling warmly.\n\nThe spacecraft's sleek, curved interior is inspired by the optimistic 1950s vision of the future, featuring rounded porthole windows through which a breathtaking view of clouds and distant mountain peaks can be seen. The control panels are filled with dials, knobs, and glowing analog screens, evoking the era's fascination with space exploration. The image is presented in striking black-and-white, reminiscent of classic sci-fi films and vintage advertisements, enhancing the nostalgic yet futuristic atmosphere.\n\nThe scene radiates a sense of adventure and optimism, portraying space travel as an elegant and commonplace luxury—an idealized atomic-age vision of the future where interplanetary journeys are as effortless as commercial flights.\n\nSAMPLE PROMPT 4:\nA glamorous woman with classic 1950s Hollywood beauty lounges elegantly aboard a retro-futuristic spacecraft, reclining on a plush, curved seat covered in soft, textured fabric. She wears a sleek, form-fitting satin dress with a subtle shimmer, reminiscent of mid-century sci-fi aesthetics, accentuating her timeless allure. Her dark, wavy hair is styled in a perfect vintage fashion, and her lips are painted a bold, deep shade. She holds a retro science fiction magazine, casually flipping through its pages, exuding effortless confidence.\n\nBehind her, a large circular porthole window reveals a breathtaking cosmic landscape—an alien moon's jagged, icy surface bathed in soft starlight, with distant celestial bodies glowing in the background. The spacecraft's interior is adorned with analog dials, metallic accents, and rounded contours, embodying the optimistic atomic-age vision of space travel. The scene is presented in striking black-and-white, evoking the elegance of vintage sci-fi films and pulp magazine covers.",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [180, 180],
+      "id": "b18a1594-68bb-4187-8943-ef44899d3268",
+      "name": "Generate Image Prompt"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.image_prompt_list",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [500, 180],
+      "id": "c4075918-78ef-4856-aa4e-f9abcef9f86d",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/flux-pro/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [980, 180],
+      "id": "77729a27-84bb-4d4f-b99a-46cabbc8683a",
+      "name": "Fal Get Image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***MASKED***",
+          "name": "Fal Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/minimax/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 520],
+      "id": "1d3a0556-c95d-4222-be77-ae1c8723d7c6",
+      "name": "Fal Get Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***MASKED***",
+          "name": "Fal Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.andynocode.com/api/function/video-generation/music-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"type\": \"MusicVideo\",\n    \"data\": {\n        \"background_url\": \"{{ $('Randomly Select Music').item.json['Music '] }}\",\n        \"media_list\": {{ JSON.stringify($('Aggregate1').item.json.url) }},\n        \"filter_style\": \"bw\"\n    }\n}",
+        "options": {}
+      },
+      "id": "cf9acdd2-99bc-4fa7-8fe7-a16e504c5fe2",
+      "name": "Render Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [200, 800],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "***MASKED***",
+          "name": "Andynocode"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.andynocode.com/api/function/video-generation/progress/{{ $json.data.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "789ea33e-82b1-4756-ac31-77dc74465402",
+      "name": "Get Video Progress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [740, 800],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "***MASKED***",
+          "name": "Andynocode"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Get AI Music Generated from Suno",
+        "height": 220,
+        "width": 1000,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [160, -140],
+      "id": "1ec7c201-4e3c-4373-a0b0-0393f7a52d8b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Generate Images From Flux",
+        "height": 320,
+        "width": 1000,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [160, 120],
+      "id": "fa5afad1-8625-4812-9b9a-ce0248a29bc2",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [440, 520],
+      "id": "3a08e57b-de09-40ad-a0c7-8b9c63a7d90a",
+      "name": "Wait2",
+      "webhookId": "5a9b48c3-5ccd-4dfb-a566-b0405c6cc662"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [820, 180],
+      "id": "db56c66e-9621-4a58-80d2-abd2f3a26679",
+      "name": "Wait1",
+      "webhookId": "5a9b48c3-5ccd-4dfb-a566-b0405c6cc662"
+    },
+    {
+      "parameters": {
+        "content": "## Generate AI Video From Minimax",
+        "height": 220,
+        "width": 1000,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [160, 460],
+      "id": "1c0a4f3c-0f0a-4737-a019-e5e21fb74719",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Render Final Video",
+        "height": 240,
+        "width": 1000,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [160, 720],
+      "id": "39e66685-f37e-42a3-881f-2161519277a3",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [460, 800],
+      "id": "352805bd-8660-4c49-ae01-a8710a377cf0",
+      "name": "Wait3",
+      "webhookId": "5a9b48c3-5ccd-4dfb-a566-b0405c6cc662"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/flux-pro/v1.1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json['output.image_prompt_list'] }}"
+            },
+            {
+              "name": "image_size",
+              "value": "landscape_16_9"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 180],
+      "id": "fb63a31b-dd70-4f1d-b4a7-60295cae6064",
+      "name": "Fal Generate Image",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***MASKED***",
+          "name": "Fal Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/minimax/video-01/image-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "=[Static shot]"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.images[0].url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [200, 520],
+      "id": "abbad95f-18f2-491f-a946-476b58b250ff",
+      "name": "Fal Generate Video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "***MASKED***",
+          "name": "Fal Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://{Your Supabase ID}.supabase.co/storage/v1/object/list/n8n",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "limit",
+              "value": "100"
+            },
+            {
+              "name": "offset",
+              "value": "0"
+            },
+            {
+              "name": "prefix"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, -80],
+      "id": "e6d6fe3a-6034-4ec1-8e1a-29bc05f51474",
+      "name": "Get Music",
+      "credentials": {
+        "supabaseApi": {
+          "id": "***MASKED***",
+          "name": "Supabase account - ***MASKED_EMAIL***"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "87a5a46c-b8c8-4df8-bcca-c74828745e79",
+              "name": "Music ",
+              "value": "=https://{Your Supabase ID}.supabase.co/storage/v1/object/public/n8n/{{ $json.name[Math.floor(Math.random() * $json.name.length)] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1000, -80],
+      "id": "69f79968-1104-44b3-9f89-0db171a1fca1",
+      "name": "Randomly Select Music"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "d353a7a0-debc-4731-8611-4e488768e4c0",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": ".mp3",
+              "operator": {
+                "type": "string",
+                "operation": "endsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [680, -80],
+      "id": "e917a31c-ae2f-4b6a-8168-8087d4fcf59c",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "name"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [840, -80],
+      "id": "88a0f062-b274-4f17-9a7e-543847a571ef",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "video.url"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [1000, 520],
+      "id": "86b5dd15-f28f-4a01-87a4-c9bd89e8e918",
+      "name": "Aggregate1"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.andynocode.com{{ $json.data.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 800],
+      "id": "5e0147d5-5271-445d-b08a-da364eb7f514",
+      "name": "Download Video"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{}]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, -80],
+      "id": "ba738456-059f-4d64-9d66-02c191a65451",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "66a28768-ada1-49eb-8d09-fc89f2339aa9",
+              "name": "Number of Video",
+              "value": "4",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [340, -80],
+      "id": "e167a78e-02bb-4863-8c02-6c60d2d29d2c",
+      "name": "Configuration"
+    }
+  ],
+  "pinData": {
+    "Generate Image Prompt": [
+      {
+        "json": {
+          "output": {
+            "image_prompt_list": [
+              "A sophisticated mid-century family—composed of a well-dressed mother, father, and two young children—enjoys a luxurious flight aboard a retro-futuristic spacecraft. The mother, in a sparkling vintage dress with elegant earrings and perfectly styled curls, sits in a plush, high-backed seat, holding her son, who is wrapped in a cozy coat. The father, in a sharp dark suit with a crisp white shirt and slim tie, sits beside their daughter, both smiling warmly. The spacecraft's sleek, curved interior is inspired by the optimistic 1950s vision of the future, featuring rounded porthole windows through which a breathtaking view of clouds and distant mountain peaks can be seen. The control panels are filled with dials, knobs, and glowing analog screens, evoking the era's fascination with space exploration. The image is presented in striking black-and-white, reminiscent of classic sci-fi films and vintage advertisements, enhancing the nostalgic yet futuristic atmosphere. The scene radiates a sense of adventure and optimism, portraying space travel as an elegant and commonplace luxury—an idealized atomic-age vision of the future where interplanetary journeys are as effortless as commercial flights.",
+              "A glamorous man with classic 1950s Hollywood charm lounges elegantly aboard a retro-futuristic spacecraft, reclining on a plush, curved seat covered in soft, textured fabric. He wears a sleek, tailored jumpsuit with metallic accents, reminiscent of mid-century sci-fi aesthetics, accentuating his timeless allure. His dark, wavy hair is styled perfectly, and his confident expression exudes effortless charm. He holds a retro science fiction magazine, casually flipping through its pages. Behind him, a large circular porthole window reveals a breathtaking cosmic landscape—an alien moon's jagged, icy surface bathed in soft starlight, with distant celestial bodies glowing in the background. The spacecraft's interior is adorned with analog dials, metallic accents, and rounded contours, embodying the optimistic atomic-age vision of space travel. The scene is presented in striking black-and-white, evoking the elegance of vintage sci-fi films and pulp magazine covers.",
+              "A stylish 1950s-inspired retro-futuristic lounge set aboard a luxury spaceship, bathed in soft ambient lighting. A well-dressed couple, a man in an elegant shimmering jumpsuit with a sleek belt and a woman in a sharp white suit, are engaged in a charming conversation. They sit on a sleek, curved leather couch, surrounding a futuristic, glowing table with an intricate digital interface. The large panoramic window behind them reveals a breathtaking cosmic view—distant stars, swirling galaxies, and glowing nebulae. The lounge is decorated with metallic accents, chrome furniture, and sparkling futuristic ornaments, evoking the optimism of mid-century sci-fi. The black-and-white aesthetic, reminiscent of classic Hollywood space-age films, enhances the nostalgic, dreamlike quality of the scene. The overall composition reflects a blend of atomic-age design and utopian futurism, capturing a vision of the future as imagined in the golden age of science fiction.",
+              "A sharply dressed woman in a sleek 1950s-style white suit, pencil skirt, and pearl necklace soars above a classic mid-century suburban street, propelled by two futuristic, chrome-plated jet thrusters attached to her hands. Her victory-rolled hair gleams as she glides confidently through the air, her expression one of determination and focus. The scene is captured in striking black-and-white, evoking the aesthetic of classic science fiction films from the atomic age. Below, vintage automobiles and palm-lined streets stretch into the distance, a perfect blend of mid-century Americana and optimistic futurism. The jet thrusters emit a soft glow, their sleek design inspired by 1950s sci-fi illustrations, featuring smooth curves, metallic finishes, and glowing energy cores. The overall composition reflects a 'future as imagined in the past' feel, seamlessly blending nostalgia with advanced technology in a retro-futuristic utopian world."
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Image Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Image Prompt",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Fal Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal Get Image": {
+      "main": [
+        [
+          {
+            "node": "Fal Generate Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal Get Video": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Video": {
+      "main": [
+        [
+          {
+            "node": "Wait3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video Progress": {
+      "main": [
+        [
+          {
+            "node": "Download Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "Fal Get Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Fal Get Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait3": {
+      "main": [
+        [
+          {
+            "node": "Get Video Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal Generate Video": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Music": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Randomly Select Music",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Randomly Select Music": {
+      "main": [
+        [
+          {
+            "node": "Generate Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Render Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Get Music",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ba82f4f4-d92d-4550-9a62-185aedeb7a35",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1740c26791c747bf49d93178a26934eaaffaca5ab2d087ae7e06b06ed236dff6"
+  },
+  "id": "jkWyRQXuieWdnM1r",
+  "tags": []
+}

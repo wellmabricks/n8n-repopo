@@ -1,0 +1,1201 @@
+{
+  "name": "Tutorial 13.2 - Scheduling Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "2ab475a3-8bc8-4663-abcb-ff9eef47b264",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [800, 440],
+      "typeVersion": 1,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Research SerpAPI",
+        "height": 256.0691960735245,
+        "width": 691.8140353770334,
+        "color": 4
+      },
+      "id": "895f970a-480f-475a-a7de-20d5b5a03c20",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [760, 360],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "1980c8d0-b3d3-80c0-8b56-f3f02af9d163",
+          "mode": "list"
+        },
+        "title": "={{ $json.query.title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Platform|multi_select",
+              "multiSelectValue": "={{ $json.query.platform }}"
+            },
+            {
+              "key": "Publish Date|date",
+              "date": "={{ $json.query.scheduleTime }}",
+              "timezone": "America/New_York"
+            },
+            {
+              "key": "Status|status",
+              "statusValue": "Scheduled"
+            },
+            {
+              "key": "Type|select",
+              "selectValue": "={{ $json.query.type }}"
+            },
+            {
+              "key": "Graphic URL|url",
+              "ignoreIfEmpty": true,
+              "urlValue": "={{ $json.query.graphic }}"
+            }
+          ]
+        },
+        "blockUi": {
+          "blockValues": [
+            {
+              "textContent": "={{ $json.query.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "41977625-3b38-41fa-9887-19d04a7f6874",
+      "name": "Schedule Post",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1120, 440],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Schedule Posting",
+        "height": 403.16502066366513,
+        "width": 700.0949064106385,
+        "color": 5
+      },
+      "id": "0499dcee-3447-4e34-b1b3-ebf8a6e4da1b",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [760, 640],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{}]
+        }
+      },
+      "id": "fcf76c46-a136-4225-8663-1db7ce7b4ee5",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [800, 800]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "1980c8d0-b3d3-80c0-8b56-f3f02af9d163",
+          "mode": "list"
+        },
+        "limit": 1,
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Publish Date|date",
+              "condition": "on_or_before",
+              "date": "={{ $now }}"
+            },
+            {
+              "key": "Status|status",
+              "condition": "equals",
+              "statusValue": "Scheduled"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "acba4662-d5f2-4658-b9da-546da309d739",
+      "name": "Grab All Post to Be Posted",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [960, 800],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "block",
+        "operation": "getAll",
+        "blockId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "limit": 1
+      },
+      "id": "21bd7bf6-9ae3-427b-b642-7f379be50d8b",
+      "name": "Get Child Node",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1120, 800],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Threads",
+        "height": 223.58640279908013,
+        "width": 923.6736143775825,
+        "color": 3
+      },
+      "id": "2ebe0949-391c-4dcd-8961-4293567f2af5",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1500, 1160]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "threads_access_token",
+        "key": "threads_access_token",
+        "options": {}
+      },
+      "id": "da77b6d7-c3d8-4e9b-8fa5-9594d53de219",
+      "name": "Get Threads Token",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1540, 1220],
+      "credentials": {
+        "redis": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $json.threads_id }}/threads?media_type={{ $('Grab All Post to Be Posted').item.json.property_type === 'Photo' ? 'IMAGE' : 'TEXT'  }}&text={{ encodeURIComponent($(\"Switch\").first().json.content) }}&access_token={{ $('Get Threads Token').item.json.threads_access_token }}&image_url={{ $('Grab All Post to Be Posted').item.json.property_graphic_url }}",
+        "options": {}
+      },
+      "id": "1d39a9f1-309c-4a90-a90e-a4efe3a1a796",
+      "name": "Create Thread Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 1220]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "def7df0d-720b-4bdb-91ce-508c197edf85",
+      "name": "Wait Time",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1960, 1220],
+      "webhookId": "66ffc7f1-1380-4b4a-867f-92b59a5ae849"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Get Threads ID').item.json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('Get Threads Token').item.json.threads_access_token }}",
+        "options": {}
+      },
+      "id": "0776d8d1-a58f-4058-8b58-ca113931404b",
+      "name": "Post Thread Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2100, 1220]
+    },
+    {
+      "parameters": {
+        "content": "## Linkedin",
+        "height": 334.0898767735192,
+        "width": 781.4279595003225
+      },
+      "id": "235a27df-df94-4652-b66d-1585dfad06e4",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1500, 360]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Grab All Post to Be Posted').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|status",
+              "statusValue": "Published"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bcc56cd9-9aa9-4c03-bbd6-815f847f10af",
+      "name": "Update Threads Post Status",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [2260, 1220],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "MASKED_PERSON_ID",
+        "text": "={{ $json.content }}",
+        "additionalFields": {}
+      },
+      "id": "f53d6dbd-bad0-4b34-a02e-54c670085581",
+      "name": "Create Linkedin",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [1720, 560],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Grab All Post to Be Posted').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|status",
+              "statusValue": "Published"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1be89ee0-f878-47e6-aca3-4babc89b1e0c",
+      "name": "Update Linkedin Post Status",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1900, 560],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Facebook",
+        "height": 394.07139777829127,
+        "width": 602.9473403143796,
+        "color": 4
+      },
+      "id": "72a0505c-46bb-4d53-9033-7cd9ed9eb779",
+      "name": "Sticky Note5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1500, 740]
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v20.0",
+        "node": "/MASKED_FACEBOOK_ID/feed",
+        "options": {
+          "queryParametersJson": "={\n  \"message\": {{ JSON.stringify( $json.content ) }},\n  \"published\":\"true\"\n}"
+        }
+      },
+      "id": "56b79fc4-69d5-4a1e-bca8-782c28d9ff67",
+      "name": "Facebook Graph API",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [1720, 960],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Grab All Post to Be Posted').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|status",
+              "statusValue": "Published"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8920015f-e18e-4395-b35f-1f8f50bbdcda",
+      "name": "Update Facebook Post Status",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1920, 960],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Instagram",
+        "height": 223.58640279908008,
+        "width": 1041.0217690018628,
+        "color": 6
+      },
+      "id": "e881f612-f68c-4598-9219-db0c0747a34a",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1500, 1420]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $json.instagram_id }}/media",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"image_url\": \"{{ $('Grab All Post to Be Posted').first().json.property_graphic_url }}\",\n  \"caption\": {{ JSON.stringify($(\"Switch\").first().json.content) }},\n  \"access_token\": \"{{ $('Get Instagram Access Token').item.json.access_token }}\"\n}",
+        "options": {}
+      },
+      "id": "a14f4821-4de9-436d-ad85-6a920cb7c667",
+      "name": "Post Instagram Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1860, 1480]
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "9c5547b9-36af-4724-97ba-a5121366d449",
+      "name": "Wait1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2020, 1480],
+      "webhookId": "3392ffb7-a915-4b05-b7b1-bd3728550809"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "instagram_id",
+        "key": "ig_id",
+        "options": {}
+      },
+      "id": "a91e9e82-aeac-4812-8f98-667b34213101",
+      "name": "Get Instagram ID",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1700, 1480],
+      "credentials": {
+        "redis": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $('Get Instagram ID').item.json.instagram_id }}/media_publish",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"creation_id\": \"{{ $json.id }}\",\n  \"access_token\": \"{{ $('Get Instagram Access Token').item.json.access_token }}\"\n}",
+        "options": {}
+      },
+      "id": "aada9910-b3f6-4e58-ac1f-64edabec575b",
+      "name": "Post Instagram Image Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2180, 1480]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "access_token",
+        "key": "ig_access_token",
+        "options": {}
+      },
+      "id": "9e69540c-e936-4ba3-a09d-a8d31a6e01df",
+      "name": "Get Instagram Access Token",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1540, 1480],
+      "credentials": {
+        "redis": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Grab All Post to Be Posted').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|status",
+              "statusValue": "Published"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e2a4886a-d6fe-4a65-895c-5cfbd6032dc1",
+      "name": "Update Instagram Post Status",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [2360, 1480],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "86981840-dbcc-4ec9-8e3c-ca200dd80eb3",
+              "name": "response",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "404e1e5c-f563-4015-96ad-cb3d64e01417",
+      "name": "Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1280, 440]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst updatedItems = items.map((item) => {\n  try {\n    const query = JSON.parse(item?.json?.query);\n    item.json.query = query;\n  } catch (error) {\n    console.log(\"Error parsing JSON string\", error);\n  }\n  return item;\n});\n\nreturn updatedItems;\n"
+      },
+      "id": "89eaab6e-0a78-4275-9d02-a26f16b7207e",
+      "name": "JSON to Object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 440]
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v20.0",
+        "node": "/MASKED_FACEBOOK_ID/photos",
+        "options": {
+          "queryParametersJson": "={\n  \"message\": {{ JSON.stringify($json.content) }},\n  \"url\": \"{{ $('Grab All Post to Be Posted').item.json.property_graphic_url }}\"\n}"
+        }
+      },
+      "id": "b9ade7b4-2323-4345-800e-4d0962bd030a",
+      "name": "Facebook Post Photo",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [1720, 800],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Grab All Post to Be Posted').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|status",
+              "statusValue": "Published"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9bad60a6-0e92-4788-b41e-2859006141df",
+      "name": "Update Facebook Post Status1",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [1920, 800],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "84323220-a70c-46ec-989d-460136610eef",
+              "leftValue": "={{ $('Grab All Post to Be Posted').item.json.property_type }}",
+              "rightValue": "Photo",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a6b4b0f9-7017-45e6-91ff-86b60249f459",
+      "name": "If Facebook",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1540, 840]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "84323220-a70c-46ec-989d-460136610eef",
+              "leftValue": "={{ $('Grab All Post to Be Posted').item.json.property_type }}",
+              "rightValue": "Photo",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6c30a04c-085b-433a-be96-f2e790eabd60",
+      "name": "If Linkedin",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1540, 500]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Grab All Post to Be Posted').item.json.property_graphic_url }}",
+        "options": {}
+      },
+      "id": "3db12a2f-a8aa-4791-9c6f-f7d9d5578300",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1720, 400]
+    },
+    {
+      "parameters": {
+        "person": "MASKED_PERSON_ID",
+        "text": "={{ $json.content }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "id": "6a7a974e-4d2b-476e-ae0b-cef8ab9125b9",
+      "name": "Create Linkedin Image",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [1900, 400],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "LinkedIn account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('Grab All Post to Be Posted').first().json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|status",
+              "statusValue": "Published"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "88beb0a8-7390-4f98-b517-e02a267a9226",
+      "name": "Update Linkedin Post Status1",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [2100, 400],
+      "credentials": {
+        "notionApi": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Grab All Post to Be Posted').item.json.property_platform }}",
+                    "rightValue": "X",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "X"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "678c0c8d-6cb6-47cf-ada1-85303cd01fc0",
+                    "leftValue": "={{ $('Grab All Post to Be Posted').item.json.property_platform }}",
+                    "rightValue": "Linkedin",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Linkedin"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "81fb1d33-52f3-48c7-803c-5a799148af03",
+                    "leftValue": "={{ $('Grab All Post to Be Posted').item.json.property_platform }}",
+                    "rightValue": "Facebook",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Facebook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "add53ebc-d789-44f6-b941-f55ea2486044",
+                    "leftValue": "={{ $('Grab All Post to Be Posted').item.json.property_platform }}",
+                    "rightValue": "Threads",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Threads"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d939c3c4-e396-44db-b1a3-4cf8003fcb71",
+                    "leftValue": "={{ $('Grab All Post to Be Posted').item.json.property_platform }}",
+                    "rightValue": "Instagram",
+                    "operator": {
+                      "type": "array",
+                      "operation": "contains",
+                      "rightType": "any"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Instagram"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4e75ab27-6833-4b29-85f5-6df4d87e5fe7",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1300, 780]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "threads_id",
+        "key": "threads_id",
+        "options": {}
+      },
+      "id": "7ff5c51e-b50a-49b2-bbc0-2cfb4f96abde",
+      "name": "Get Threads ID",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [1680, 1220],
+      "credentials": {
+        "redis": {
+          "id": "MASKED_CREDENTIAL_ID",
+          "name": "Redis account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Execute Workflow Trigger": [
+      {
+        "json": {
+          "query": "{\"scheduleTime\": \"2025-02-19T15:00:00+08:00\", \"platform\": \"Facebook\", \"title\": \"Exciting News from Elon Musk's xAI!\", \"content\": \"Elon Musk's xAI has just unveiled its cutting-edge AI model, Grok 3! Hailed as a revolutionary leap in AI technology, Grok 3 is designed with advanced features to take innovation to new heights. Whether you're a tech aficionado or simply curious about AI, Grok 3 promises unprecedented capabilities.\n\n💡 Read the full article: https://techcrunch.com/2025/02/17/elon-musks-ai-company-xai-releases-its-latest-flagship-ai-grok-3/\n\nStay tuned as we explore the impacts and potential of this exciting release!\n\n#Grok3 #AIInnovation #TechNews\", \"graphic\": \"\", \"type\": \"Text\"}"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "JSON to Object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Grab All Post to Be Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grab All Post to Be Posted": {
+      "main": [
+        [
+          {
+            "node": "Get Child Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Child Node": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Threads Token": {
+      "main": [
+        [
+          {
+            "node": "Get Threads ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Thread Media": {
+      "main": [
+        [
+          {
+            "node": "Wait Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Time": {
+      "main": [
+        [
+          {
+            "node": "Post Thread Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Thread Data": {
+      "main": [
+        [
+          {
+            "node": "Update Threads Post Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Linkedin": {
+      "main": [
+        [
+          {
+            "node": "Update Linkedin Post Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Graph API": {
+      "main": [
+        [
+          {
+            "node": "Update Facebook Post Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Instagram Media": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Post Instagram Image Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Instagram ID": {
+      "main": [
+        [
+          {
+            "node": "Post Instagram Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Instagram Image Post": {
+      "main": [
+        [
+          {
+            "node": "Update Instagram Post Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Instagram Access Token": {
+      "main": [
+        [
+          {
+            "node": "Get Instagram ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Post": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON to Object": {
+      "main": [
+        [
+          {
+            "node": "Schedule Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook Post Photo": {
+      "main": [
+        [
+          {
+            "node": "Update Facebook Post Status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Facebook": {
+      "main": [
+        [
+          {
+            "node": "Facebook Post Photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Facebook Graph API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Linkedin": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Linkedin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Create Linkedin Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Linkedin Image": {
+      "main": [
+        [
+          {
+            "node": "Update Linkedin Post Status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If Linkedin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Threads Token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Instagram Access Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Threads ID": {
+      "main": [
+        [
+          {
+            "node": "Create Thread Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "56155152-f36d-4e01-a01d-9b8757bfce97",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "MASKED_INSTANCE_ID"
+  },
+  "id": "MASKED_WORKFLOW_ID",
+  "tags": []
+}

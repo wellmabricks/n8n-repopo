@@ -1,0 +1,443 @@
+{
+  "name": "Tutorial 7.2 - How I Built an AI Agent to Turn YouTube Videos into My Own AI Avatar Videos (No-Code)",
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "function extractYoutubeId(url) {\n    const patterns = [\n        /(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/)([^&\\n?#]+)/,\n        /youtube\\.com\\/shorts\\/([^&\\n?#]+)/\n    ];\n\n    for (const pattern of patterns) {\n        const match = url.match(pattern);\n        if (match && match[1]) {\n            return match[1];\n        }\n    }\n    return null;\n}\n\nconst youtubeUrl = $json.url;\n\nif (!youtubeUrl) {\n    return [{json: {error: 'No YouTube URL found'}}];\n}\n\nconst videoId = extractYoutubeId(youtubeUrl);\nreturn [{json: {videoId}}];"
+      },
+      "id": "2acc9d66-cefa-4665-ad6a-e54501cce40b",
+      "name": "Extract video id",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        2040,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.searchapi.io/api/v1/search",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "engine",
+              "value": "youtube_transcripts"
+            },
+            {
+              "name": "video_id",
+              "value": "={{ $json.videoId }}"
+            },
+            {
+              "name": "lang",
+              "value": "={{$json['lang'] || 'en'}}"
+            },
+            {
+              "name": "transcript_type",
+              "value": "={{$json['transcript_type'] || 'auto'}}"
+            },
+            {
+              "name": "api_key",
+              "value": "=tEv27xJrnzRu8un6ZBYcwEcq"
+            }
+          ]
+        }
+      },
+      "name": "YouTube Transcripts API1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        180
+      ],
+      "id": "bd2b2fc3-87c1-46eb-8f37-eb42abc826af"
+    },
+    {
+      "parameters": {},
+      "id": "8452ceba-867a-4210-9de2-28b58402bb6e",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1820,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## HeyGen Create Avatar Videos API\nhttps://docs.heygen.com/docs/create-video\n\n1. Get API Keys from https://app.heygen.com/settings?nav=API\n2. Get voice and avatar\n3. Video only store on Heygen for 7 days, remember to download it before expiry",
+        "height": 377.2358215129725,
+        "width": 1135.4922387555523
+      },
+      "id": "a6d036bc-0a20-4b32-a891-6e1537e3db35",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n          {\"role\": \"system\", \"content\": \"Convert the following YouTube transcript into a detailed, reader-friendly, 10 seconds very short Podcast style intro. My name is Andy Lo, just return the pure speech transcript with out and other content like [Podcast Intro - 10 Seconds]. Here's the transcript: \"},\n          {\"role\": \"user\", \"content\": \"{{ $json.transcripts.map(i => i.text) }}\"}\n        ],\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "id": "32ab31f8-a1ac-4397-86e2-a7921497c548",
+      "name": "Get Caption By Deepseek",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2460,
+        180
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Dkr5uVHPbgO4n8uI",
+          "name": "Deepseek API"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.heygen.com/v2/video/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "xxxxx"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"video_inputs\": [\n    {\n      \"character\": {\n        \"type\": \"avatar\",\n        \"avatar_id\": \"4e8116db15c04a059416d50735bed7ac\",\n        \"avatar_style\": \"normal\"\n      },\n      \"voice\": {\n        \"type\": \"text\",\n        \"input_text\": \"{{ $json.choices[0].message.content }}\",\n        \"voice_id\": \"a954b2fe87e94d78b68268fc44894ead\",\n        \"speed\": 1.1\n      }\n    }\n  ],\n  \"dimension\": {\n    \"width\": 1280,\n    \"height\": 720\n  }\n} ",
+        "options": {}
+      },
+      "id": "fbb60aa0-8eba-4f8b-9759-817fe6df29f8",
+      "name": "Call Heygen API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 300
+      },
+      "id": "6dfdc6ca-6b3e-4971-92df-bb534caff5d7",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2040,
+        760
+      ],
+      "webhookId": "10bd1846-bfbe-4e0d-96e4-bdb61f2572b7",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://api.heygen.com/v1/video_status.get?video_id={{ $('Call Heygen API').item.json.data.video_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Api-Key",
+              "value": "xxxxx"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fe6f46ed-c9af-41fd-a140-af1c15cc5b1e",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2260,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "18cb4f31-2d5f-42c1-86f6-fe182b7cee14",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "processing",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4799f6ec-a4b3-4c5b-bef1-b13d577bbe84",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2460,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Map Searcher",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.data.id }}",
+            "status": "={{ $json.data.status }}",
+            "thumbnail_url": "={{ $json.data.thumbnail_url }}",
+            "video_url": "={{ $json.data.video_url }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "thumbnail_url",
+              "displayName": "thumbnail_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "video_url",
+              "displayName": "video_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3a4d4654-5860-45ea-8699-48f37fdbe032",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2660,
+        760
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Otcg7vToMUrwIwzC",
+          "name": "Stanley Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Generating transcript from Youtube by Deepseek\n\n1. Extract Video ID from message\n2. Get Youtube transcription by Searchapi\n3. Using Deepseek to generate transcription",
+        "height": 427.18506863863695,
+        "width": 1134.4718736204886,
+        "color": 3
+      },
+      "id": "0f6fa58c-3871-4949-9e6e-1cece0598b09",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        9.536711614957312
+      ]
+    }
+  ],
+  "pinData": {
+    "When clicking ‘Test workflow’": [
+      {
+        "json": {
+          "url": "https://www.youtube.com/watch?v=NCaRixtXNIo"
+        }
+      }
+    ],
+    "Call Heygen API": [
+      {
+        "json": {
+          "error": null,
+          "data": {
+            "video_id": "7c5b4520760e46b2ab7fbe2d95213bf1"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Extract video id": {
+      "main": [
+        [
+          {
+            "node": "YouTube Transcripts API1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Extract video id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Transcripts API1": {
+      "main": [
+        [
+          {
+            "node": "Get Caption By Deepseek",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Caption By Deepseek": {
+      "main": [
+        [
+          {
+            "node": "Call Heygen API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Heygen API": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ae1954f8-816c-409e-85b0-a050c285afec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "N3gSCQS3xbWJEKNi",
+  "tags": []
+}

@@ -1,0 +1,120 @@
+{
+  "name": "Tutorial 13.2 - Generate an image with Flux and send it via Telegram",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "3dd95aff-251d-4dfc-96ce-c3b1c951e44a",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [500, 540],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "response",
+              "stringValue": "={{ $('Generate image in Dall-E 3').first().json.data[0].url }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9b565bc0-fa43-474d-8d1e-b25469c46ead",
+      "name": "add response field",
+      "type": "n8n-nodes-base.set",
+      "position": [840, 540],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "content": "## Generate an image with Flux and send it via Telegram",
+        "height": 264.48760541783787,
+        "width": 564.1140279403056
+      },
+      "id": "3caf50ca-409a-490d-965a-e488cb9ee5db",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [460, 460],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "dall-e-3"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "n",
+              "value": 1
+            },
+            {
+              "name": "size",
+              "value": "1024x1024"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "84b69c74-bd8f-4a29-a6db-99128b90ed07",
+      "name": "Generate image in Dall-E 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [660, 540],
+      "typeVersion": 4.1,
+      "credentials": {
+        "openAiApi": {
+          "id": "***MASKED***",
+          "name": "OpenAi Account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Generate image in Dall-E 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate image in Dall-E 3": {
+      "main": [
+        [
+          {
+            "node": "add response field",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4b67d4ee-a60e-4fa7-83ce-77fb7d477a82",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "***MASKED***"
+  },
+  "id": "***MASKED***",
+  "tags": []
+}

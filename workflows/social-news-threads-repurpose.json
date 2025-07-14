@@ -1,0 +1,2160 @@
+{
+  "name": "Tutorial 1.4 - I Built an AI Agent to Auto-Repurpose News into Engaging Threads (100% Automated)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://graph.threads.net/access_token?grant_type=th_exchange_token&client_secret={{ $json.client_secret }}&access_token={{ $json.access_token }}",
+        "options": {}
+      },
+      "id": "f21561e4-7993-431e-a915-792db34e49cb",
+      "name": "Exchange Long Credentials",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1260,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cd155dd0-e411-4599-a419-1fbe4872feb3",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1440,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## First Time Get Long Lived Access Token",
+        "height": 243.2064466781735,
+        "width": 672.3446078049573
+      },
+      "id": "bc23bf97-cbc7-4f82-bdb3-b154a4d31a93",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Refresh Long Lived Access Token",
+        "height": 290.5199163579194,
+        "width": 1034.3424461714314,
+        "color": 3
+      },
+      "id": "a5d2fc16-e045-43ea-af02-532dfe472721",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "45ae74a0-7d74-4ca4-909b-276a63578442",
+              "name": "access_token",
+              "value": "xxxxxxxxxx",
+              "type": "string"
+            },
+            {
+              "id": "c3ad863b-e3e8-4258-bd29-f408c1bf900a",
+              "name": "client_secret",
+              "value": "xxxxxxxxxx",
+              "type": "string"
+            },
+            {
+              "id": "67800dde-27f3-402a-bb29-221fb6a1480e",
+              "name": "account_id",
+              "value": "jackycheng.aiautomation",
+              "type": "string"
+            },
+            {
+              "id": "c8676dfd-f42b-4b37-92cc-95a2d4dfe0fe",
+              "name": "language",
+              "value": "Traditional Chinese (Hong Kong)",
+              "type": "string"
+            },
+            {
+              "id": "d65b2215-b84f-42e6-8702-1adb951365a6",
+              "name": "threads_id",
+              "value": "00000000000000000",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "067847ed-d60a-433d-8074-60e1e73ff5c8",
+      "name": "First Access Global",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "dataMode": "defineBelow",
+        "columnToMatchOn": "account_id",
+        "valueToMatchOn": "={{ $('First Access Global').item.json.account_id }}",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "token_type",
+              "value": "={{ $json.token_type }}"
+            },
+            {
+              "column": "expires_in",
+              "value": "={{ $now + $json.expires_in }}"
+            },
+            {
+              "column": "access_token",
+              "value": "={{ $json.access_token }}"
+            },
+            {
+              "column": "language",
+              "value": "={{ $('First Access Global').item.json.language }}"
+            },
+            {
+              "column": "threads_id",
+              "value": "={{ $('First Access Global').item.json.threads_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "264da83c-8909-473f-ac89-d60ce491d44d",
+      "name": "Save Token",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1420,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3ad863b-e3e8-4258-bd29-f408c1bf900a",
+              "name": "client_secret",
+              "value": "xxxxxxxxxx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "188a9b95-97c1-4e9e-94ee-1fceb0459b3a",
+      "name": "Refresh Token Global",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1100,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "expires_in",
+              "condition": "<",
+              "value": "={{ $now + 86400 * 7 }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f11f3114-5753-41d0-b47e-7da8cbde628d",
+      "name": "Get Expiried Token",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1260,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token={{ $json.access_token }}",
+        "options": {}
+      },
+      "id": "a5f0c3fc-7b1c-4db4-aee8-12e1459c2381",
+      "name": "Refresh Token",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1620,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "dataMode": "defineBelow",
+        "columnToMatchOn": "account_id",
+        "valueToMatchOn": "={{ $('Loop Over Items').item.json.account_id }}",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "expires_in",
+              "value": "={{ $now + $json.expires_in }}"
+            },
+            {
+              "column": "access_token",
+              "value": "={{ $json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "33be3735-0a88-48ce-a724-74ddebba9635",
+      "name": "Update Token",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1780,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Threads Post Ideas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json.account_id }}",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Post Status"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "98f5afee-757b-405a-b4ef-d59874753fea",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1420,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "publish",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ec7e0e10-125f-4f08-b58e-ab486f33adae",
+      "name": "MySQL",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1100,
+        1060
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Threads Post Ideas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop Over Items1').item.json.account_id }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Google Sheets').item.json.row_number }}",
+            "New Threads Content": "={{ $json.message.content }}",
+            "Post Status": "Posted",
+            "Post Time": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Original Threads Content",
+              "displayName": "Original Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "New Threads Content",
+              "displayName": "New Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Status",
+              "displayName": "Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Time",
+              "displayName": "Post Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issues",
+              "displayName": "Issues",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "95a7d9cd-93ff-4940-a6f7-13a31356ebbd",
+      "name": "Google Sheets1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2420,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Loop Over Items1').item.json.threads_id }}/threads?media_type=TEXT&text={{ encodeURIComponent($json['New Threads Content']) }}&access_token={{ $('Loop Over Items1').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "fe483b05-4288-46fc-9e78-c863d0dcc969",
+      "name": "Post Thread Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2560,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Loop Over Items1').item.json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('Loop Over Items1').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "a4d60c88-85d9-40f9-802a-46370c002ebb",
+      "name": "Send Threads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2700,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Repurpose Threads",
+        "height": 444.50153451156916,
+        "width": 1956.1590526944897,
+        "color": 4
+      },
+      "id": "dc5ba347-6473-46ed-9f7f-78f6e77a3504",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "21877c23-9c78-48f5-9f2d-95b8372b86f1",
+              "leftValue": "={{ $json['New Threads Content'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e8a84f3e-2224-4325-b2a3-3e9d19c803a0",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1720,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Threads Post Ideas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop Over Items1').item.json.account_id }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Post Status": "Posted",
+            "Post Time": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Original Threads Content",
+              "displayName": "Original Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "New Threads Content",
+              "displayName": "New Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Status",
+              "displayName": "Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Post Time",
+              "displayName": "Post Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Issues",
+              "displayName": "Issues",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bef863ab-117a-46b7-8d15-5b8969490cf1",
+      "name": "Google Sheets2",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1880,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Loop Over Items1').item.json.threads_id }}/threads?media_type=TEXT&text={{ encodeURIComponent($('If').item.json['New Threads Content']) }}&access_token={{ $('Loop Over Items1').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "d131e819-ad70-483e-a2be-fe01e2e25c6e",
+      "name": "Post Existing Thread Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2020,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Loop Over Items1').item.json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('Loop Over Items1').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "32785d64-cdb3-455c-9bb4-a41346ea021e",
+      "name": "Send Existing Threads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "683b6ba6-7bf0-4aed-8df5-16dee04a10e2",
+              "leftValue": "={{ $json.row_number }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f10efa51-50ce-4cd8-a38d-359005b87a8b",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1560,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3a6c1eb0-ff10-45af-9781-385e6a0aaa60",
+      "name": "Loop Over Items1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1260,
+        1060
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "c088b1b8-19fc-49b3-9334-03e697c3b5fe",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        1160
+      ],
+      "webhookId": "b56d7826-1994-4b78-9343-6250edef5cb0"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "aa8dfcc3-9524-4d5b-a2f7-9d481780ade7",
+      "name": "Wait1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2700,
+        1020
+      ],
+      "webhookId": "718895d9-e3e8-4d5f-a1b8-207341db0595"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Take reference to this user twitter education post which focus on finding job, assume you are an AI Marketing Workflow Transformation Expert, create a tweet like the structure of the tweet below in AI Marketing Workflow Transformation, language in {{ $('Loop Over Items1').item.json.language }} and in 500 Characters:",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json['Original Threads Content'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "373dd4ed-abc6-4406-8b85-ece0e2f8f062",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        1880,
+        1020
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "## Repurpose News to Threads",
+        "height": 587.2217703930584,
+        "width": 1441.7203803614389,
+        "color": 6
+      },
+      "id": "2916b175-1071-47f9-bdd0-538f5ed8e590",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        1480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Select Account').item.json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('Select Account').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "2aeff5a2-6da7-433e-a4b1-3842e48cab95",
+      "name": "Send Existing Threads2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2340,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "publish",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d16e96f0-ba29-484e-9cc1-c2532dc843a6",
+      "name": "Select News Account",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1300,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8b430d13-23cd-4308-91e2-29e9db2d8e47",
+      "name": "Loop Over Items Accounts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1460,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.exa.ai/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-api-key",
+              "value": "={{ $('Set Global Credential').item.json.exa_credential }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $json.message.content }}\",\n  \"type\": \"neural\",\n  \"useAutoprompt\": true,\n  \"contents\": {\n    \"text\": true\n  }\n}",
+        "options": {}
+      },
+      "id": "ce5a9426-3eca-427e-ae9e-7386d1d28414",
+      "name": "Exa Get Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1940,
+        1580
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ed02e7c-db63-47e0-b5a8-1af91c57ac94",
+              "name": "exa_credential",
+              "value": "xxxxxxxxxx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "54a4598f-d486-447b-9544-d674e6e625ef",
+      "name": "Set Global Credential",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "id": "123347eb-e4ba-4943-b440-7ba911881a9f",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        1580
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Scheduled Post",
+        "height": 584.2002566728924,
+        "width": 1805.568784317371,
+        "color": 5
+      },
+      "id": "f577c87e-a982-46bd-8839-7e33c7e67988",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        920,
+        2100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "threads-credentials",
+          "mode": "list",
+          "cachedResultName": "threads-credentials"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "publish",
+              "value": "1"
+            },
+            {
+              "column": "account_id",
+              "value": "={{ $json.account_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ae2f61b6-c7b4-452c-8aae-81cd2b2d9e6e",
+      "name": "Select Account",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [
+        1340,
+        2180
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Threads Post Ideas V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Loop Over Items Accounts').item.json.account_id }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Original Threads Content": "={{ $('Split Out').item.json.text }}",
+            "New Threads Content": "={{ $json.message.content }}",
+            "Post Status": "pending",
+            "Images": "={{ $('Split Out').item.json.image ?? '' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Original Threads Content",
+              "displayName": "Original Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "New Threads Content",
+              "displayName": "New Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Status",
+              "displayName": "Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Time",
+              "displayName": "Post Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issues",
+              "displayName": "Issues",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Images",
+              "displayName": "Images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3b24087f-5286-4a6b-b3a7-c5eae67b7e2a",
+      "name": "Append Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1820
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Threads Post Ideas V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $json.account_id }}",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Post Status",
+              "lookupValue": "pending"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "id": "e8515804-0517-456f-92aa-65d92def398d",
+      "name": "Select Threads",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1740,
+        2180
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6a12f82e-0319-4e65-8607-6aa2ae4ca628",
+      "name": "Loop Over threads",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1680,
+        2400
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "['New Threads Content']",
+        "options": {}
+      },
+      "id": "97236a39-95c9-4977-85db-8e9521d22a55",
+      "name": "Split Out Thread",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        2400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1bc83b78-f1e0-4fc0-b2f3-b4e17842d9ff",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d84c50c6-c291-4caa-992d-e0883abcdc81",
+      "name": "IF First Item",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1860,
+        2420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Select Account').item.json.threads_id }}/threads?media_type={{ $('Select Account').item.json.Images ? 'IMAGE&image_url=' + $('Limit Thread').item.json.Images : 'TEXT' }}&text={{ encodeURIComponent($json['[\\'New Threads Content\\']']) }}&access_token={{ $('Select Account').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "7a38676c-1635-4549-ab3e-b4b5464e0397",
+      "name": "Create Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2020,
+        2280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/{{ $('Select Account').item.json.threads_id }}/threads_publish?creation_id={{ $json.id }}&access_token={{ $('Select Account').item.json.access_token }}",
+        "options": {}
+      },
+      "id": "c612994e-60f3-4cd1-83e5-f404a9b6ca8a",
+      "name": "Post Thread Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2340,
+        2280
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85baf1f4-4690-434a-8826-69f24748be46",
+              "name": "prev_thread_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "084e918e-a715-45f4-94ef-ecdf41607923",
+      "name": "Set ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2540,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.threads.net/v1.0/me/threads",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "text"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json['[\\'New Threads Content\\']'] }}"
+            },
+            {
+              "name": "reply_to_id",
+              "value": "={{  $('Set ID').first(0, $runIndex).json.prev_thread_id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $('Select Account').item.json.access_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0cc250c9-3fcf-4d7a-ace2-cf6a598c2600",
+      "name": "Send Reply Thread",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2020,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "fac86602-5a9d-4004-86bc-b1483677fee9",
+      "name": "Wait Time",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2180,
+        2280
+      ],
+      "webhookId": "caf97797-eae8-4e65-851b-00a59b90bd60"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "37a84e00-f1e6-4b3c-92d9-fcc4f569f00b",
+      "name": "Wait Time1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2180,
+        2440
+      ],
+      "webhookId": "5f0f683c-c9e6-4be2-b0a8-c7d5f1430441"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "id": "c56ecf6a-f196-46d4-b57b-14d9c4b681fc",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst updatedItems = items.map((item) => {\n  const newContent = item?.json[\"New Threads Content\"]\n    .split(\"----Thread----\")\n    .map((word) => word.trim());\n  item.json[\"New Threads Content\"] = newContent;\n  return item;\n});\nreturn updatedItems;\n"
+      },
+      "id": "fe0770f0-9bd1-43d0-ad8c-eeabdacfeaa7",
+      "name": "Split Threads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        2400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Threads Post Ideas V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Select Account').item.json.account_id }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Post Time": "={{ $now }}",
+            "Post Status": "posted"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Original Threads Content",
+              "displayName": "Original Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "New Threads Content",
+              "displayName": "New Threads Content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Status",
+              "displayName": "Post Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Post Time",
+              "displayName": "Post Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Issues",
+              "displayName": "Issues",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Images",
+              "displayName": "Images",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d4df21b-c805-4f41-b14c-78632ca4ea24",
+      "name": "Update Posted",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1900,
+        2180
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a19a7113-c590-467d-b09b-8b02c6c4be22",
+              "name": "account_id",
+              "value": "xxxxxxxxxxxxx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4921e8e7-6270-455f-b2ce-f74f40228731",
+      "name": "Edit Fields (Proxa)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1140,
+        2180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "eeed9cbe-e270-464a-9fe7-0ad7a21ea5e9",
+      "name": "Limit",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        2180
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            },
+            {
+              "triggerAtHour": 18
+            },
+            {
+              "triggerAtHour": 22
+            },
+            {
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "id": "ec1c539c-02bf-46a7-a51c-2ee66145a650",
+      "name": "Schedule Trigger (Proxa)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        2180
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            },
+            {
+              "triggerAtHour": 18
+            },
+            {
+              "triggerAtHour": 22
+            },
+            {
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "id": "600d8826-ad0c-4eaa-900c-654cc5029ae2",
+      "name": "Schedule Trigger (Nighthustle)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        2400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a19a7113-c590-467d-b09b-8b02c6c4be22",
+              "name": "account_id",
+              "value": "nighthustles",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8a1cc201-8632-45a4-bab6-64c1f877a0fd",
+      "name": "Edit Fields (Nighthustle)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1140,
+        2400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ab6b4827-05a4-40eb-b935-069202182a6f",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "false",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "347952c6-fedf-4f8b-8669-fc88a6775d5f",
+      "name": "If false",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1940,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a Twitter copywriter. Your task is to repurpose the user's article content into compelling Twitter posts.\n\nWorkflow:\n\n1. Assess the article for sufficient context and content to create a Twitter post. If inadequate, return false.\n2. Repurpose the article into a Twitter post:\nIf the repurposed post exceeds Twitter's maximum character limit, split it into a thread.\nFormatting:\n3a. For a single post, return the repurposed text directly.\nFor threads:\n3b. Start the first tweet with a thread indicator: (THREAD 🧵) 1/{total number of tweets}. End subsequent tweets with: 🧵 {current number}/{total number of tweets}.\nSeparate individual tweets with ----Thread----.\n\nTwitter Post Requirements:\n\nEach post must be less than 400 characters.\nInclude 1 hashtag relevant to the content.\nDo not include labels such as \"Output\" in your response.\nExamples:\n\nExample 1 - Not Enough Context:\nfalse\n\nExample 2 - Single Twitter Post:\nSo in less than 24 hours we got:\n\nGoogle unveiling a quantum chip that solves in 5 minutes what would take the best supercomputers 10 septillion(!) years.\nOpenAI launching Sora with almost photorealistic AI video quality.\nThe timeline is unreal.\n\nExample 3 - Multiple Twitter Threads:\n(THREAD 🧵) 1/2\nBREAKING: A public school teacher lost her job after refusing to let first graders use the restroom.\n\nMultiple kids peed themselves after the teacher revoked the entire class's right to use the restroom.\n\nThe teacher messaged parents blaming the victims.\n\nBuckle up\n----Thread----\nThe 1st grade teacher is Ashley Barrera.\nShe taught at Bartlett Elementary School in Conroe, Texas.\nShe's no longer employed by the district.\n🧵 2/2",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cfe5b3ed-c5b3-47fb-8ac9-69407aa00769",
+      "name": "Article Repurpose",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        1620,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a helpful assistant that generates search queries based on category. There will be multiple category seperated by comma. Only generate one search query with one topic for today. Today's time {{ $now }}, text only without \"\" or ''",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.category }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ff7e5706-1720-4945-b962-39cf071a692b",
+      "name": "Natural Language for News Retrival",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        1620,
+        1580
+      ],
+      "alwaysOutputData": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Exchange Long Credentials": {
+      "main": [
+        [
+          {
+            "node": "Save Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Refresh Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "First Access Global": {
+      "main": [
+        [
+          {
+            "node": "Exchange Long Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Token Global": {
+      "main": [
+        [
+          {
+            "node": "Get Expiried Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Expiried Token": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Token": {
+      "main": [
+        [
+          {
+            "node": "Update Token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Token": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets1": {
+      "main": [
+        [
+          {
+            "node": "Post Thread Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Thread Media": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets2": {
+      "main": [
+        [
+          {
+            "node": "Post Existing Thread Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Existing Thread Media": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Threads": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Existing Threads": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send Existing Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Send Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select News Account": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items Accounts": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Natural Language for News Retrival",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Global Credential": {
+      "main": [
+        [
+          {
+            "node": "Select News Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exa Get Content": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Article Repurpose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Google Sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items Accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Account": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Threads": {
+      "main": [
+        [
+          {
+            "node": "Split Threads",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Thread": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over threads": {
+      "main": [
+        [],
+        [
+          {
+            "node": "IF First Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF First Item": {
+      "main": [
+        [
+          {
+            "node": "Create Thread",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Reply Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Thread": {
+      "main": [
+        [
+          {
+            "node": "Wait Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Thread Data": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set ID": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Time": {
+      "main": [
+        [
+          {
+            "node": "Post Thread Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Reply Thread": {
+      "main": [
+        [
+          {
+            "node": "Wait Time1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Time1": {
+      "main": [
+        [
+          {
+            "node": "Send Existing Threads2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Existing Threads2": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Threads": {
+      "main": [
+        [
+          {
+            "node": "Split Out Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields (Proxa)": {
+      "main": [
+        [
+          {
+            "node": "Select Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Select Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Global Credential",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If false": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Append Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Article Repurpose": {
+      "main": [
+        [
+          {
+            "node": "If false",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger (Proxa)": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields (Proxa)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger (Nighthustle)": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields (Nighthustle)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields (Nighthustle)": {
+      "main": [
+        [
+          {
+            "node": "Select Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Natural Language for News Retrival": {
+      "main": [
+        [
+          {
+            "node": "Exa Get Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "774449d5-317f-4190-8e7b-70e4b7a3b63e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "Ar4NUopKCawjY81L",
+  "tags": []
+}

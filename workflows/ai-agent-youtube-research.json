@@ -1,0 +1,752 @@
+{
+  "name": "Template 7 - How I Built an AI Agent to Research YouTube Video Ideas (No-Code)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Add new channel",
+        "formDescription": "Please input the full video link like:\nhttps://www.youtube.com/@StephenGPope\n\nOne URL per row.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Channel URL",
+              "fieldType": "textarea",
+              "placeholder": "Full URL of the youtube channel (one per row)"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7acb4eba-4e16-4304-833e-1fddcb7675e4",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [3060, 720],
+      "webhookId": "93f72586-015d-42cf-a2c0-b2868e0753ad",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// const items = $input.all();\n\nconst items = [\n  { json: { 'Channel URL': 'https://www.youtube.com/@StephenGPope\\r\\nhttps://www.youtube.com/@aiadvantage\\r\\nhttps://www.youtube.com/@t3dotgg' }},\n]\n\nconst updatedItems = items.map((item) => {\n  const urls = item?.json[\"Channel URL\"].split(\"\\r\\n\");\n  const channelNames = urls.map((url) => '@' + url.split(\"@\")[1].toLowerCase());\n  return { channelNames };\n});\n\nreturn updatedItems;\n"
+      },
+      "id": "5939a8bd-5dc1-48fb-9e12-c6e2f0758bc7",
+      "name": "Get Channel Handle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3260, 720]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT channel_handle FROM youtube_statistic_channels WHERE channel_handle IN ({{ $json.channelNames.map(c => `'${c}'`).join(',') }})",
+        "options": {}
+      },
+      "id": "25c2b086-7bba-447b-b4ce-4794268d6c2e",
+      "name": "Search Exists Channel",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [3460, 720],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "Xk9mP4nR2tL7vB5q",
+          "name": "info@proxa.cc"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get both inputs\nconst originalChannels = $('Get Channel Handle').all()[0].json.channelNames; // From the first URL parsing node\nconst existingChannels = $('Search Exists Channel').all() || [];  // From the Postgres query\n\nif (!existingChannels[0]) {\n  // Return { handle: i }[] for next request loop\n  return originalChannels.map(item => ({ \n    json: {\n      itemData: item,\n    }\n  }));\n}\n \n// Create a Set of existing handles for faster lookup\nconst existingHandles = new Set(existingChannels.map(row => row.json.channel_handle));\n\n// Filter out channels that already exist\nconst newChannels = originalChannels.filter(channel => \n  !existingHandles.has(channel)\n);\n\n// Log for debugging\nconsole.log('Original channels:', originalChannels.length);\nconsole.log('Existing channels:', existingHandles.size);\nconsole.log('New channels to add:', newChannels.length);\n\n// If no new channels, return empty to stop workflow\nif (newChannels.length === 0) {\n  return [];\n}\n\nconsole.log(newChannels)\n\nreturn newChannels.map(item => ({ \n    json: {\n      itemData: item,\n    }\n  }));"
+      },
+      "id": "6810598a-5b76-40ba-a75e-24235c4f6e6f",
+      "name": "Parse All Handle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3660, 720]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "25752880-87b1-470d-b2fe-82836a8ca19f",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [3860, 1060]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "03dd015f-1ca6-4860-929e-49770d863247",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [3460, 1380]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "745a3127-1e5f-4170-b3de-185be39406ae",
+      "name": "Split Out1",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [4080, 1380]
+    },
+    {
+      "parameters": {
+        "content": "## Adding new channels to database\n",
+        "height": 269.6706740502735,
+        "width": 1402.8096125330376
+      },
+      "id": "b6a67111-db9a-4856-b9d9-09c1ceff88bc",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2980, 640]
+    },
+    {
+      "parameters": {
+        "content": "## Fetch videos from channels",
+        "height": 269.6706740502735,
+        "width": 1402.8096125330376,
+        "color": 2
+      },
+      "id": "edcf26d2-4bd2-4bfa-b00d-cd528dd23e0e",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2980, 960]
+    },
+    {
+      "parameters": {
+        "content": "## Get video statistic from Youtube",
+        "height": 269.6706740502735,
+        "width": 1682.244480661132,
+        "color": 3
+      },
+      "id": "bd05bf5e-02ca-4fb2-ae7b-ba72b27d5439",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2980, 1280]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 1,
+              "triggerAtMinute": 10
+            }
+          ]
+        }
+      },
+      "id": "f96142fc-c95e-4b17-a743-a9a67a73bf49",
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [3060, 1380]
+    },
+    {
+      "parameters": {
+        "url": "=https://youtube.googleapis.com/youtube/v3/channels?part=snippet&forHandle={{ $json.itemData }}&key=Kj8dL9mN4pQ7vR2xT6wY9hB3fC5nM1aS8gU4bE3kL7pH",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "d838dfca-782f-4e89-8560-e30f2993a07d",
+      "name": "Fetch Channel from API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3860, 720],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "jH4kL9mN2pQ5vC8x",
+          "name": "info@proxa.cc Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "youtube_statistic_channels",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "channel_handle",
+              "fieldValue": "={{ $json.items[0].snippet.customUrl }}"
+            },
+            {
+              "fieldId": "channel_id",
+              "fieldValue": "={{ $json.items[0].id }}"
+            }
+          ]
+        }
+      },
+      "id": "53606811-1ccc-4887-a0c5-35520811e971",
+      "name": "Store Channels into Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4060, 720],
+      "credentials": {
+        "supabaseApi": {
+          "id": "bN7kR4pL2mS9vX5q",
+          "name": "info@proxa.cc Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 1
+            }
+          ]
+        }
+      },
+      "id": "0d768aa4-361a-4ca5-93e7-7d331d28dcc4",
+      "name": "Daily 1:00 trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [3060, 1060]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "youtube_statistic_channels"
+      },
+      "id": "94cb8a67-fc2e-4893-b5b2-a9d6c5985f97",
+      "name": "Get All Channels From DB",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [3260, 1060],
+      "credentials": {
+        "supabaseApi": {
+          "id": "bN7kR4pL2mS9vX5q",
+          "name": "info@proxa.cc Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://youtube.googleapis.com/youtube/v3/search?part=snippet&channelId={{ $json.channel_id }}&maxResults=50&order=date&type=video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "b8eee11b-65f8-4eb7-ab49-7b5984135d79",
+      "name": "Fetch Videos From API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3460, 1060],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "jH4kL9mN2pQ5vC8x",
+          "name": "info@proxa.cc Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function mapYouTubeToSupabase(youtubeDataItems) {\n  return youtubeDataItems.map(item => ({\n    id: item.id.videoId,\n    kind: item.kind,\n    etag: item.etag,\n    published_at: item.snippet.publishedAt,\n    channel_id: item.snippet.channelId,\n    channel_title: item.snippet.channelTitle,\n    title: item.snippet.title,\n    description: item.snippet.description,\n    thumbnail: item.snippet.thumbnails.default.url,\n    category_id: item.snippet.categoryId,\n    tags: item.snippet.tags || [],\n    live_broadcast_content: item.snippet.liveBroadcastContent\n  }));\n}\n\nreturn $input.all().map(i => ({ json: { items: mapYouTubeToSupabase(i.json.items) } }))\n"
+      },
+      "id": "491d72cf-548e-490f-af5b-99f802f5a396",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3660, 1060]
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "youtube_statistic_videos",
+          "mode": "list",
+          "cachedResultName": "youtube_statistic_videos"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": "={{ $json.itemData[0].id }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "kind",
+              "displayName": "kind",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "etag",
+              "displayName": "etag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "published_at",
+              "displayName": "published_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channel_id",
+              "displayName": "channel_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channel_title",
+              "displayName": "channel_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category_id",
+              "displayName": "category_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "live_broadcast_content",
+              "displayName": "live_broadcast_content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "default_audio_language",
+              "displayName": "default_audio_language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "thumbnail",
+              "displayName": "thumbnail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "localized",
+              "displayName": "localized",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "id": "75c98d0a-8759-4d01-8f6d-33b1469b60d7",
+      "name": "Insert to DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [4080, 1060],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "Xk9mP4nR2tL7vB5q",
+          "name": "info@proxa.cc Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "youtube_statistic_videos",
+          "mode": "list",
+          "cachedResultName": "youtube_statistic_videos"
+        },
+        "returnAll": true,
+        "options": {
+          "outputColumns": ["id"]
+        }
+      },
+      "id": "26c24e58-57e5-4dc0-96ae-7805a12b59e8",
+      "name": "Select all Videos ID",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [3260, 1380],
+      "credentials": {
+        "postgres": {
+          "id": "Xk9mP4nR2tL7vB5q",
+          "name": "info@proxa.cc Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all().map((item) => item.json)[0].id;\n\nconst result = [];\nfor (let i = 0; i < items.length; i += 10) {\n  result.push({ json: { ids: items.slice(i, i + 10) } });\n}\n\nreturn result;\n"
+      },
+      "id": "f21414ae-0b3e-4c20-8073-a16d71484652",
+      "name": "Split Out IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3680, 1380]
+    },
+    {
+      "parameters": {
+        "url": "=https://youtube.googleapis.com/youtube/v3/videos?part=statistics,snippet&id={{ $json.ids }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "2ae7d9e1-2b40-4fff-a430-855601d10cb6",
+      "name": "Fetch Video Stat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3880, 1380],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "jH4kL9mN2pQ5vC8x",
+          "name": "info@proxa.cc Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "youtube_statistic_video_stat",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "video_id",
+              "fieldValue": "={{ $json.id }}"
+            },
+            {
+              "fieldId": "view_count",
+              "fieldValue": "={{ $json.statistics.viewCount }}"
+            },
+            {
+              "fieldId": "like_count",
+              "fieldValue": "={{ $json.statistics.likeCount }}"
+            },
+            {
+              "fieldId": "favorite_count",
+              "fieldValue": "={{ $json.statistics.favoriteCount }}"
+            },
+            {
+              "fieldId": "comment_count",
+              "fieldValue": "={{ $json.statistics.commentCount }}"
+            }
+          ]
+        }
+      },
+      "id": "a254aee4-cd71-4b97-b3f0-506191e6e38d",
+      "name": "Insert Into DB",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4280, 1380],
+      "credentials": {
+        "supabaseApi": {
+          "id": "bN7kR4pL2mS9vX5q",
+          "name": "info@proxa.cc Supabase"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get Channel Handle": {
+      "main": [
+        [
+          {
+            "node": "Search Exists Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Exists Channel": {
+      "main": [
+        [
+          {
+            "node": "Parse All Handle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse All Handle": {
+      "main": [
+        [
+          {
+            "node": "Fetch Channel from API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Get Channel Handle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Insert to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Split Out IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Insert Into DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Select all Videos ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Channel from API": {
+      "main": [
+        [
+          {
+            "node": "Store Channels into Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 1:00 trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Channels From DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Channels From DB": {
+      "main": [
+        [
+          {
+            "node": "Fetch Videos From API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Videos From API": {
+      "main": [
+        [
+          {
+            "node": "Parse Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select all Videos ID": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out IDs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Video Stat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Video Stat": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4b3b52a6-7662-4855-aace-24fb9eeb94c4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8f47mp9214q675xx34789pp443qw12zz98k4217896wm741963yy51n852m4"
+  },
+  "id": "h8NfAOLcgkrCwN2z",
+  "tags": [
+    {
+      "createdAt": "2025-01-28T07:53:03.821Z",
+      "updatedAt": "2025-01-28T07:53:03.821Z",
+      "id": "UmrR2LNV3n5EWSeP",
+      "name": "andynocode free"
+    }
+  ]
+}

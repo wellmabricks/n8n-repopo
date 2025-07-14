@@ -1,0 +1,846 @@
+{
+  "name": "Tutorial 3.2 - How I Built an AI Agent to Repurpose YouTube Videos into Twitter Threads (100% No-Code!)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d6451433-2a35-4db9-a837-4f1b39e83226",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.searchapi.io/api/v1/search",
+        "options": {},
+        "queryParametersUi": {
+          "parameter": [
+            {
+              "name": "engine",
+              "value": "youtube_transcripts"
+            },
+            {
+              "name": "video_id",
+              "value": "={{$json['video_id']}}"
+            },
+            {
+              "name": "lang",
+              "value": "={{$json['lang'] || 'en'}}"
+            },
+            {
+              "name": "transcript_type",
+              "value": "={{$json['transcript_type'] || 'auto'}}"
+            },
+            {
+              "name": "api_key",
+              "value": "={{ $('Search API').item.json.api_key }}"
+            }
+          ]
+        }
+      },
+      "name": "YouTube Transcripts API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        860
+      ],
+      "id": "218fbb67-4b55-4eef-9cee-3475c1d34c3f"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "44024808-4665-4a94-b50b-1b43e2728d5d",
+      "name": "loop_over_items1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        720,
+        840
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "limit": 1,
+        "filters": {
+          "publishedAfter": "={{ new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() }}",
+          "q": "=Open AI",
+          "regionCode": "US"
+        },
+        "options": {
+          "order": "relevance",
+          "safeSearch": "moderate"
+        }
+      },
+      "id": "1078aea0-17bc-41dd-8f68-11ac18384a10",
+      "name": "Get Popular Videos",
+      "type": "n8n-nodes-base.youTube",
+      "position": [
+        540,
+        840
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "FTgX6cHqwDxzGgBQ",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d436472c-3696-4c0b-9922-ac9064d38396",
+              "name": "video_id",
+              "value": "={{ $json.id.videoId }}",
+              "type": "string"
+            },
+            {
+              "id": "001b68da-45a5-4598-a837-9fc6b0937359",
+              "name": "lang",
+              "value": "en",
+              "type": "string"
+            },
+            {
+              "id": "a2a10b69-7063-48f0-87fb-0da5ad581fc1",
+              "name": "transcript_type",
+              "value": "manual",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cc10c048-83ba-4176-9083-883cc6a98092",
+      "name": "Set Video ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        900,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f13e3bf3-3228-494c-b7d4-f0c3f6ba64fd",
+              "name": "api_key",
+              "value": "xxxxxxxxxxx",
+              "type": "string"
+            },
+            {
+              "id": "9d834b21-8249-4309-8e47-f94f3fffbf2c",
+              "name": "project_key",
+              "value": "xxxxxxxxxxx",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "919caaba-bb18-49c3-82ec-b5c023dc688d",
+      "name": "Search API",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const transcripts = $json.transcripts || [];\nreturn {\n  transcript: transcripts.map(transcript => transcript.text).join(' ')\n};"
+      },
+      "name": "Process Transcripts",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        860
+      ],
+      "id": "11e9a2e5-ac5a-41ce-91ac-22b10f5f89fb"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxxxxxxxx",
+          "mode": "list",
+          "cachedResultName": "Youtube Transcript",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Search API').item.json.project_key }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Twitter Post": "={{ $json.message.content }}",
+            "Transcript": "={{ $('Process Transcripts').item.json.transcript }}",
+            "Youtube URL": "=https://www.youtube.com/watch?v={{ $('Set Video ID').item.json.video_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Twitter Post",
+              "displayName": "Twitter Post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Youtube URL",
+              "displayName": "Youtube URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Posted Time",
+              "displayName": "Posted Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "75e35dd3-873f-4d5c-8b00-eac23180b03c",
+      "name": "Update Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1280,
+        1060
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fXkt3mkIhz4ruk1c",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Youtube Transcript",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "xxxxxxxxxxxxx",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "dbd8d38c-8d6c-4ff7-98ad-152daf6b11da",
+      "name": "Get Post Record",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        340,
+        1520
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fXkt3mkIhz4ruk1c",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst updatedItems = items.map((item) => {\n  const newContent = item?.json[\"Twitter Post\"]\n    .split(\"----Thread----\")\n    .map((word) => word.trim());\n  item.json[\"Twitter Post\"] = newContent;\n  return item;\n});\nreturn updatedItems;\n"
+      },
+      "id": "13e9de92-002e-483f-8589-75aa726f5ed3",
+      "name": "Split Threads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "['Twitter Post']",
+        "options": {}
+      },
+      "id": "d8ae571a-453b-4136-a951-07fc4a36b866",
+      "name": "Split Out Thread",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        940,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "60e6353f-f254-49e8-8941-6e07783ef681",
+      "name": "Loop Over threads",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1140,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1bc83b78-f1e0-4fc0-b2f3-b4e17842d9ff",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bbb71c87-b1ae-42c6-a8bb-b2d232bbf866",
+      "name": "IF First Item",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1340,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85baf1f4-4690-434a-8826-69f24748be46",
+              "name": "prev_twitter_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2e63f4b7-5c4a-497d-8258-91865774eb28",
+      "name": "Set ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1740,
+        1580
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxxx",
+          "mode": "list",
+          "cachedResultName": "Youtube Transcript",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxx/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "=xxxxxxxxxxxxx",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Status": "posted",
+            "Posted Time": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Transcript",
+              "displayName": "Transcript",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Twitter Post",
+              "displayName": "Twitter Post",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Youtube URL",
+              "displayName": "Youtube URL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Posted Time",
+              "displayName": "Posted Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a90ab07f-87b4-43c1-96ca-e2d8c8c2ab41",
+      "name": "Update Posted",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        560,
+        1360
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "fXkt3mkIhz4ruk1c",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json['[\\'Twitter Post\\']'] }}",
+        "additionalFields": {
+          "inReplyToStatusId": {
+            "__rl": true,
+            "value": "={{  $('Set ID').first(0, $runIndex).json.prev_twitter_id }}",
+            "mode": "id"
+          }
+        }
+      },
+      "id": "53659eb3-4d85-43a1-8696-bd254cf2f743",
+      "name": "Reply X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        1600
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "R0VQsL9uQ6pYujxV",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json['[\\'Twitter Post\\']'] }}",
+        "additionalFields": {}
+      },
+      "id": "c191996e-d8c8-4a12-875e-2fae4364d438",
+      "name": "Create X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        1440
+      ],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "R0VQsL9uQ6pYujxV",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## X Twitter Thread Post",
+        "height": 451.2118563314106,
+        "width": 1763.3902489253223,
+        "color": 5
+      },
+      "id": "ffa70100-1c75-4859-ac2a-20b77f409d6c",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        140,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a Twitter copywriter. Your task is to repurpose video transcript into compelling Twitter posts.\n\nWorkflow:\n\n1. Assess the transcript for sufficient context and content to create a Twitter post.\n2. Repurpose the article into a Twitter post:\nIf the repurposed post exceeds Twitter's maximum character limit, split it into a thread.\nFormatting:\n3a. For a single post, return the repurposed text directly.\nFor threads:\n3b. Start the first tweet with a thread indicator: (THREAD 🧵) 1/{total number of tweets}. End subsequent tweets with: 🧵 {current number}/{total number of tweets}.\nSeparate individual tweets with ----Thread----.\n\nTwitter Post Requirements:\n\nEach post must be less than 200 characters.\nInclude 1 hashtag relevant to the content.\nDo not include labels such as \"Output\" in your response.\nExamples:\n\nExample 1 - Single Twitter Post:\nSo in less than 24 hours we got:\n\nGoogle unveiling a quantum chip that solves in 5 minutes what would take the best supercomputers 10 septillion(!) years.\nOpenAI launching Sora with almost photorealistic AI video quality.\nThe timeline is unreal.\n\nExample 2 - Multiple Twitter Threads:\n(THREAD 🧵) 1/2\nBREAKING: A public school teacher lost her job after refusing to let first graders use the restroom.\n\nMultiple kids peed themselves after the teacher revoked the entire class's right to use the restroom.\n\nThe teacher messaged parents blaming the victims.\n\nBuckle up\n----Thread----\nThe 1st grade teacher is Ashley Barrera.\nShe taught at Bartlett Elementary School in Conroe, Texas.\nShe's no longer employed by the district.\n🧵 2/2",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.transcript }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e734fd27-0e78-4418-95e2-f38252a8fdbf",
+      "name": "Article Repurpose",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        940,
+        1060
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "B1xgcEjX0hRSH8UV",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "84ddbdef-86ca-4d2f-aca1-c79af21840b7",
+      "name": "Limit",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        560,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Get Transcript and make it a post",
+        "height": 505.29840550488086,
+        "width": 1327.68940759724
+      },
+      "id": "a48faa82-1f92-484e-a898-5abf2441129b",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        140,
+        780
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Transcripts API": {
+      "main": [
+        [
+          {
+            "node": "Process Transcripts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop_over_items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Set Video ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Popular Videos": {
+      "main": [
+        [
+          {
+            "node": "loop_over_items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Video ID": {
+      "main": [
+        [
+          {
+            "node": "YouTube Transcripts API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search API": {
+      "main": [
+        [
+          {
+            "node": "Get Popular Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Transcripts": {
+      "main": [
+        [
+          {
+            "node": "Article Repurpose",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Row": {
+      "main": [
+        [
+          {
+            "node": "Get Popular Videos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Post Record": {
+      "main": [
+        [
+          {
+            "node": "Update Posted",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Threads": {
+      "main": [
+        [
+          {
+            "node": "Split Out Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Thread": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over threads": {
+      "main": [
+        [],
+        [
+          {
+            "node": "IF First Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF First Item": {
+      "main": [
+        [
+          {
+            "node": "Create X",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply X",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set ID": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply X": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create X": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Article Repurpose": {
+      "main": [
+        [
+          {
+            "node": "Update Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Split Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6027957b-8464-43af-b15a-62bd4c0b741c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "Rl1z0AvrKfihaxjy",
+  "tags": []
+}

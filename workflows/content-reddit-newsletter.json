@@ -1,0 +1,1409 @@
+{
+  "name": "Template 18 - Reddit Newsletter",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "",
+        "options": {}
+      },
+      "id": "32ebb6a3-0ec9-4d1f-b2d0-135d11b66c6b",
+      "name": "Request Email Template",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 1100]
+    },
+    {
+      "parameters": {
+        "html": "{{ $json.data }}"
+      },
+      "id": "785b2eea-41e7-4ec6-95cb-89d3bdca1a9a",
+      "name": "HTML",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [1940, 1100]
+    },
+    {
+      "parameters": {
+        "sendTo": "",
+        "subject": "Andy No Code Newsletter",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "df59a90d-ce66-48e5-a1b1-94a7d473640a",
+      "name": "Create Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2100, 1100],
+      "webhookId": "d01ac571-072c-40e7-ae02-c2f808b6a400",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xKpSgHXE5FqmBkjY",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "id": "ef5ea63d-a02e-433a-96ff-5faeb0334e46",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [1320, 1680]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/trudax~reddit-scraper-lite/runs",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "",
+        "options": {}
+      },
+      "id": "48c47fb1-cd9e-4a3b-945b-e6a6eddb0ee3",
+      "name": "Initiate Scraping",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1480, 1680],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "DkT8rwXUSzaMnB29",
+          "name": "Apify Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f93f0805-ef49-4a16-b914-0c757a8d849b",
+              "leftValue": "={{ $json.data.status }}",
+              "rightValue": "SUCCEEDED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3c52514f-7b51-4c43-bb75-c12c84dc0ad1",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1820, 1680]
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "id": "f3c15bc9-b91d-41ad-b551-728f72c84a8d",
+      "name": "Wait 1 Minute",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1980, 1780],
+      "webhookId": "7327545c-2fcd-49d6-9168-67370d66a15f"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.apify.com/v2/datasets/{{ $json.data.defaultDatasetId }}/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "5e292ce9-156e-4135-8f84-bc42beb3fdc2",
+      "name": "Get Reddit Dataset",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1980, 1620],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "DkT8rwXUSzaMnB29",
+          "name": "Apify Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Retrieve Data From Reddit",
+        "height": 440.3084427914496,
+        "width": 1084.446721037991,
+        "color": 7
+      },
+      "id": "691a6891-6d21-4a66-a6ff-f6d001b4cd6f",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1280, 1560]
+    },
+    {
+      "parameters": {
+        "content": "## Filter Reddit Post",
+        "height": 224.54655147005883,
+        "width": 957.0008591520989,
+        "color": 7
+      },
+      "id": "1285c78a-1671-4b3d-af15-b42f8a00e4cd",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [620, 1040]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "id": "56b06ef3-5b8f-4daf-8b30-fcc9f2a9de1c",
+      "name": "Schedule Trigger1",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [660, 1100]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "cachedResultName": "Newsletter"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Non Filter"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": "={{ $('Limit').item.json.id }}",
+            "parsedId": "={{ $('Limit').item.json.parsedId }}",
+            "url": "={{ $('Limit').item.json.url }}",
+            "username": "={{ $('Limit').item.json.username }}",
+            "userId": "={{ $('Limit').item.json.userId }}",
+            "title": "={{ $('Limit').item.json.title }}",
+            "communityName": "={{ $('Limit').item.json.communityName }}",
+            "parsedCommunityName": "={{ $('Limit').item.json.parsedCommunityName }}",
+            "body": "={{ $('Limit').item.json.body }}",
+            "html": "={{ $('Limit').item.json.html }}",
+            "link": "={{ $('Limit').item.json.link }}",
+            "numberOfComments": "={{ $('Limit').item.json.numberOfComments }}",
+            "flair": "={{ $('Limit').item.json.flair }}",
+            "upVotes": "={{ $('Limit').item.json.upVotes }}",
+            "upVoteRatio": "={{ $('Limit').item.json.upVoteRatio }}",
+            "isVideo": "={{ $('Limit').item.json.isVideo }}",
+            "isAd": "={{ $('Limit').item.json.isAd }}",
+            "over18": "={{ $('Limit').item.json.over18 }}",
+            "thumbnailUrl": "={{ $('Limit').item.json.thumbnailUrl }}",
+            "imageUrls": "=",
+            "createdAt": "={{ $('Limit').item.json.createdAt }}",
+            "scrapedAt": "={{ $('Limit').item.json.scrapedAt }}",
+            "dataType": "={{ $('Limit').item.json.dataType }}"
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "parsedId",
+              "displayName": "parsedId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "userId",
+              "displayName": "userId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "communityName",
+              "displayName": "communityName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "parsedCommunityName",
+              "displayName": "parsedCommunityName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "body",
+              "displayName": "body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "html",
+              "displayName": "html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "numberOfComments",
+              "displayName": "numberOfComments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "flair",
+              "displayName": "flair",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "upVotes",
+              "displayName": "upVotes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "upVoteRatio",
+              "displayName": "upVoteRatio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "isVideo",
+              "displayName": "isVideo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "isAd",
+              "displayName": "isAd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "over18",
+              "displayName": "over18",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "thumbnailUrl",
+              "displayName": "thumbnailUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "imageUrls",
+              "displayName": "imageUrls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "createdAt",
+              "displayName": "createdAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scrapedAt",
+              "displayName": "scrapedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dataType",
+              "displayName": "dataType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "videoUrl",
+              "displayName": "videoUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "206375f4-a110-4d85-9bd3-dbdeff9400c3",
+      "name": "Save Records",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2160, 1620],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gXkt3mkIhz4ruk1d",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "Newsletter"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Reddit"
+        },
+        "options": {}
+      },
+      "id": "b5e21155-2e3b-43ac-8a26-381a5cef6677",
+      "name": "Get Filter",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [820, 1100],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gXkt3mkIhz4ruk1d",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.together.xyz/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-ai/DeepSeek-V3\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": {{ JSON.stringify(`You are a news researcher, your task is to determine the following content is related to AI news.\nThe news should have sufficient context, if not enough return false\nReturn true if relevant and false if irrelevant. Please don't include any \"and '. AND don't include any explanation.\nExample Case 1:\nContent: OpenAI has launched another Great Model! O1-mini!\nOutput: true\n\nExample Case 2:\nContent: What is blockchain?\nOutput: false`) }}\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(`Title: ${$json.title}\nDescription: ${$json.html}`) }}\n    }\n  ],\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "id": "a6fb875c-413e-4d02-81a1-93710fb205b1",
+      "name": "Check Relevant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 1100],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RZsvmtZA43DzE9MI",
+          "name": "Together AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4663482c-8a27-4998-a073-edfe1c9b27f6",
+              "leftValue": "={{ $json.choices[0].message.content }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6eaac9e0-ab24-447f-b3c8-4d4f6ed09f3a",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1180, 1100]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "Newsletter"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Reddit"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Get Filter').item.json.row_number }}",
+            "Relevant": "Yes"
+          },
+          "matchingColumns": ["row_number"],
+          "schema": [
+            {
+              "id": "body",
+              "displayName": "body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "communityName",
+              "displayName": "communityName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "createdAt",
+              "displayName": "createdAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dataType",
+              "displayName": "dataType",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "flair",
+              "displayName": "flair",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "html",
+              "displayName": "html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "imageUrls/0",
+              "displayName": "imageUrls/0",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "isAd",
+              "displayName": "isAd",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "isVideo",
+              "displayName": "isVideo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "link",
+              "displayName": "link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "numberOfComments",
+              "displayName": "numberOfComments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "over18",
+              "displayName": "over18",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "parsedCommunityName",
+              "displayName": "parsedCommunityName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "parsedId",
+              "displayName": "parsedId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "scrapedAt",
+              "displayName": "scrapedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "thumbnailUrl",
+              "displayName": "thumbnailUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "upVoteRatio",
+              "displayName": "upVoteRatio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "upVotes",
+              "displayName": "upVotes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "userId",
+              "displayName": "userId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "videoUrl",
+              "displayName": "videoUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Relevant",
+              "displayName": "Relevant",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c0e27d81-2d5f-4b3e-92d4-f116f3870554",
+      "name": "Update Relevant",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1400, 1080],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gXkt3mkIhz4ruk1d",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Get Reddit Post and Convert to Newsletter",
+        "height": 254.4559054029802,
+        "width": 1741.0515993031008,
+        "color": 7
+      },
+      "id": "c1e07521-f84e-45e3-84f0-bd55a8b02318",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [620, 1280]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "id": "f8828ad9-e922-45ae-bff1-b558981e68bb",
+      "name": "Schedule Trigger2",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [660, 1360]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AX7f2DO7xvWPUu9OrjjIP5qCCvM06Du36bFR5iqA-lQ",
+          "mode": "list",
+          "cachedResultName": "Newsletter"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Reddit"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Relevant",
+              "lookupValue": "Yes"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c50c3f9b-dcba-4994-89d3-51769faca906",
+      "name": "Get Relevant News",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [820, 1360],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gXkt3mkIhz4ruk1d",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c7c9e68a-e4ff-4509-98b6-513149d5f13c",
+              "leftValue": "={{ $json.flair }}",
+              "rightValue": "News",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "69c71f4a-5cdc-425d-9c1f-2358c908ea80",
+              "leftValue": "={{ $json.flair }}",
+              "rightValue": "Article",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "caef1893-4c61-4fc7-a2e2-3d171bf8885c",
+              "leftValue": "={{ $json.flair }}",
+              "rightValue": "Discussion",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "101430ef-94d0-42a2-a2f3-46aeae2d52fb",
+      "name": "Filter",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [980, 1360]
+    },
+    {
+      "parameters": {
+        "content": "## Send Newsletter",
+        "height": 221.5970771548648,
+        "width": 756.1149255445425,
+        "color": 7
+      },
+      "id": "bc37d599-54f8-4005-8f3a-bbf61c165b26",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1600, 1040]
+    },
+    {
+      "parameters": {},
+      "id": "0cdf8c0b-6c87-44de-af57-578e01c46fa3",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [1620, 1100]
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "title"
+            },
+            {
+              "fieldToAggregate": "html"
+            },
+            {
+              "fieldToAggregate": "url"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5e7d01fd-59cb-436a-aff7-d9c8e02a048c",
+      "name": "Aggregate",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [1140, 1360]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.together.xyz/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-ai/DeepSeek-V3\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": {{ JSON.stringify(`Analyze the following array of objects to determine the overarching theme shared across all titles.  \nIdentify **one title** that best encapsulates this theme, then return the 5 most relevant 'row_number' entries  \nthat directly relate to this central topic.\n\n**RETURN JSON String only, don't add json text and other informative text. Don't add \\`\\`\\`json or \\`\\`\\`\n\nOutput format (JSON):  \n{  \n  \"title\": \"Concise title representing the shared theme\",  \n  \"row_number\": [list of 5 relevant row numbers]  \n}`) }}\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{\nJSON.stringify(JSON.stringify(\n  $json.title.map((item, index) => (\n    {row: index, title: item}\n  )))\n)}}\n    }\n  ],\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "id": "f6dbbe67-ae4a-4b59-a0be-40ec66a9f574",
+      "name": "Summarize Reddit Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 1360],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RZsvmtZA43DzE9MI",
+          "name": "Together AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst updatedItems = items.map((item) => {\n  try {\n    const content = JSON.parse(item?.json?.choices[0]?.message?.content);\n    item.json.choices[0].message.content = content;\n  } catch (error) {\n    console.log(\"Error parsing JSON string\", error);\n  }\n  return item;\n});\n\nreturn updatedItems;\n"
+      },
+      "id": "c4375332-9dd3-4656-a1b1-c27cf4f6aef1",
+      "name": "JSON to Object",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 1360]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.together.xyz/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-ai/DeepSeek-R1\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": {{ JSON.stringify(`Create a detailed and insightful newsletter that provides a balanced analysis of a specific topic, including both supporting and opposing perspectives. Incorporate personal insights to enrich the discussion. Reference at least five relevant Reddit posts from diverse communities to ground your analysis in real-world opinions and experiences. Ensure the newsletter is well-structured, engaging, and formatted in Markdown. Include the following sections:\n\nIntroduction: Briefly introduce the topic and its relevance.\n\nSupporting Arguments: Present key points in favor of the topic, backed by insights from Reddit posts and your own analysis.\n\nOpposing Arguments: Highlight key points against the topic, supported by Reddit references and your critical perspective.\n\nPersonal Insights: Share your unique viewpoint, drawing connections between the Reddit discussions and your own thoughts.\n\nConclusion: Summarize the analysis, provide a balanced takeaway, and suggest further reading or discussion points.\n\nReferences: List the Reddit posts used, with links for readers to explore further.\n\nEnsure the tone is professional yet approachable, and the content is well-organized for readability.\n\n***Don't add \\`\\`\\`markdown in front of the output, return the content directly!`) }}\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(JSON.stringify($json.choices[0].message.content.row_number.map(row => `URL: ${$('Aggregate').item.json.url[row]}\\nPost Content: ${$('Aggregate').item.json.html[row]}` ))) }}\n    }\n  ],\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "id": "745c8d94-2ae9-46d0-a5d3-b46711b2119c",
+      "name": "Convert to Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 1360],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RZsvmtZA43DzE9MI",
+          "name": "Together AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.together.xyz/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"deepseek-ai/DeepSeek-V3\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": {{ JSON.stringify(`You are tasked with generating an excerpt, category, and slug for a newsletter based on its content. Follow these guidelines:\n\nExcerpt: Create a concise and engaging summary of the newsletter content in 1-2 sentences. Ensure it captures the main idea and key points.\n\nCategory: Assign one of the following categories based on the content:\n\nautomation\n\nai\n\ntutorial\n\ncommunity\n\nChoose the most relevant category.\n\nSlug: Generate a URL-friendly slug (lowercase, hyphen-separated, and concise) that reflects the main topic of the newsletter.\n\nReading Time: Predict the time in minutes on reading the article\n\n**RETURN JSON String only, don't add json text and other informative text. Don't add \\`\\`\\`json or \\`\\`\\`\n\nOutput Format: Provide the result in JSON format as shown below:\n{\n  \"excerpt\": \"string\",\n  \"category\": \"automation | ai | tutorial | community\",\n  \"slug\": \"string\",\n  \"reading_time\": \"integer\"\n}\nExample Input:\nNewsletter Content: \"OpenAI has announced new updates to GPT-4, including improved reasoning capabilities and support for multimodal inputs. These enhancements are expected to revolutionize AI-driven applications across industries.\"\n\nExample Output:\n{\n  \"excerpt\": \"OpenAI introduces updates to GPT-4, featuring enhanced reasoning and multimodal input support, paving the way for transformative AI applications.\",\n  \"category\": \"openai\",\n  \"slug\": \"openai-gpt-4-updates\",\n  \"reading_time\": 1\n}`) }}\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify($json.choices[0].message.content) }}\n    }\n  ],\n  \"stream\": false\n}",
+        "options": {}
+      },
+      "id": "49ac1c85-5544-468f-8259-ccf2b0c259d7",
+      "name": "Create Category, Excerpt, Slug",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1860, 1360],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RZsvmtZA43DzE9MI",
+          "name": "Together AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst updatedItems = items.map((item) => {\n  try {\n    const content = JSON.parse(item?.json?.choices[0]?.message?.content);\n    item.json.choices[0].message.content = content;\n  } catch (error) {\n    console.log(\"Error parsing JSON string\", error);\n  }\n  return item;\n});\n\nreturn updatedItems;\n"
+      },
+      "id": "0371ad05-bb66-4560-9792-93905d4dad9d",
+      "name": "JSON to Object1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2040, 1360]
+    },
+    {
+      "parameters": {
+        "tableId": "newsletters",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $('Convert to Article').item.json.choices[0].message.content }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('JSON to Object').item.json.choices[0].message.content.title }}"
+            },
+            {
+              "fieldId": "excerpt",
+              "fieldValue": "={{ $json.choices[0].message.content.excerpt }}"
+            },
+            {
+              "fieldId": "slug",
+              "fieldValue": "={{ $json.choices[0].message.content.slug }}-{{ 1 }}"
+            },
+            {
+              "fieldId": "category",
+              "fieldValue": "={{ $json.choices[0].message.content.category }}"
+            },
+            {
+              "fieldId": "reading_time",
+              "fieldValue": "={{ $json.choices[0].message.content.reading_time }}"
+            },
+            {
+              "fieldId": "published_at",
+              "fieldValue": "={{ $now }}"
+            }
+          ]
+        }
+      },
+      "id": "6b6aff25-71e0-4eb7-99a2-ad4a0f385f9e",
+      "name": "Create Newsletter",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2200, 1360],
+      "credentials": {
+        "supabaseApi": {
+          "id": "MjzTGuT7vebgMbAj",
+          "name": "Supabase n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "= https://api.apify.com/v2/actor-runs/{{ $('Initiate Scraping').first().json.data.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "options": {}
+      },
+      "id": "d0f61317-8ec5-4608-ae10-3f1ca657c96c",
+      "name": "Get Apify Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1660, 1680],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "DkT8rwXUSzaMnB29",
+          "name": "Apify Key"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Request Email Template": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Create Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Initiate Scraping",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initiate Scraping": {
+      "main": [
+        [
+          {
+            "node": "Get Apify Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get Reddit Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 1 Minute",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reddit Dataset": {
+      "main": [
+        [
+          {
+            "node": "Save Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1 Minute": {
+      "main": [
+        [
+          {
+            "node": "Get Apify Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Filter": {
+      "main": [
+        [
+          {
+            "node": "Check Relevant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Relevant": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Update Relevant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger2": {
+      "main": [
+        [
+          {
+            "node": "Get Relevant News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Relevant News": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Request Email Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Summarize Reddit Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Reddit Post": {
+      "main": [
+        [
+          {
+            "node": "JSON to Object",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON to Object": {
+      "main": [
+        [
+          {
+            "node": "Convert to Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Article": {
+      "main": [
+        [
+          {
+            "node": "Create Category, Excerpt, Slug",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Category, Excerpt, Slug": {
+      "main": [
+        [
+          {
+            "node": "JSON to Object1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON to Object1": {
+      "main": [
+        [
+          {
+            "node": "Create Newsletter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Apify Status": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "acf17eaf-926b-4900-ba60-9d69a11c7fbd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "Nbg3gpWFqhXPNxKn",
+  "tags": [
+    {
+      "createdAt": "2025-01-28T07:53:03.821Z",
+      "updatedAt": "2025-01-28T07:53:03.821Z",
+      "id": "UmrR2LNV3n5EWSeP",
+      "name": "andynocode free"
+    }
+  ]
+}

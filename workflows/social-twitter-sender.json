@@ -1,0 +1,322 @@
+{
+  "name": "Common - Send X Twitter Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Send X Twitter (x.com)",
+        "height": 373.2358768014966,
+        "width": 1397.6110400154494,
+        "color": 7
+      },
+      "id": "d98c2171-419e-419f-985e-dddf81c4abd8",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {},
+      "id": "07aac08f-a83c-404d-a4ef-aa2b04b5336f",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [1060, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const threadText = $(\"Edit Fields\").first().json.thread_text.split(\"----Thread----\").map((word) => word.trim());\n\nreturn { threadText };\n"
+      },
+      "id": "f6e5d771-47d6-4d77-bb03-3afce3907e3a",
+      "name": "Split Threads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 400]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "89cc4393-5294-4eb0-8a62-89b377dd8de2",
+      "name": "Loop Over threads",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1720, 400]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "threadText",
+        "options": {}
+      },
+      "id": "7f9a2f8e-fb43-48b9-9a8d-8d4b941c934e",
+      "name": "Split Out Threads",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [1540, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1bc83b78-f1e0-4fc0-b2f3-b4e17842d9ff",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "425e6795-2fc4-48b2-ac88-f77cf26998c8",
+      "name": "IF First Item",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1880, 460]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "85baf1f4-4690-434a-8826-69f24748be46",
+              "name": "prev_thread_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a677e9fd-0389-4f6a-b768-95c1509a7850",
+      "name": "Set ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2220, 440]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "03767225-a9d1-459d-a171-f6ef2cd6af64",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "64f2646f-a286-4ee7-a3d2-313398ff4d25",
+      "name": "Return Value",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1880, 320]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f12a7c5e-9366-477c-80e7-b0e670bb259c",
+              "name": "thread_text",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4a60cc86-dd72-41ad-9bb9-a79790e821f4",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1220, 400]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.threadText }}",
+        "additionalFields": {}
+      },
+      "id": "1a4a07a8-669e-4037-90db-c0fcd4e00104",
+      "name": "X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [2060, 340],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "<REDACTED>",
+          "name": "X account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.threadText }}",
+        "additionalFields": {
+          "inReplyToStatusId": {
+            "__rl": true,
+            "value": "={{  $('Set ID').first(0, $runIndex).json.prev_thread_id }}",
+            "mode": "id"
+          }
+        }
+      },
+      "id": "5d0bf40a-f8a1-4749-8987-2c78441a37a3",
+      "name": "Reply X",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [2060, 480],
+      "credentials": {
+        "twitterOAuth2Api": {
+          "id": "XXXXX",
+          "name": "X account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Execute Workflow Trigger": [
+      {
+        "json": {
+          "query": "something"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Threads": {
+      "main": [
+        [
+          {
+            "node": "Split Out Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over threads": {
+      "main": [
+        [
+          {
+            "node": "Return Value",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF First Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Threads": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF First Item": {
+      "main": [
+        [
+          {
+            "node": "X",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply X",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set ID": {
+      "main": [
+        [
+          {
+            "node": "Loop Over threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Split Threads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "X": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply X": {
+      "main": [
+        [
+          {
+            "node": "Set ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9ba2fde2-f56e-45d1-834e-dda1954988ae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "tlbajWr56oM43nij",
+  "tags": []
+}

@@ -1,0 +1,365 @@
+{
+  "name": "Tutorial 14.2 - Automate Job Search With AI Resume/CV by Reading Your LinkedIn, Github & More [n8n No-Code Template]",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "71a1b619-1305-42ed-ae73-3901cc97ceda",
+      "name": "When chat message received",
+      "webhookId": "3aa3d333-3329-46f4-8a0e-308e2a31d467"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a resume generator AI agent, you can use the following tools:\n1. Get Github Profile - Get user profile from Github by username\n2. Get Github Repo - Get user repo from Github by username\n3. Linkedin Profile Crawler - Get user profile from Linkedin by username\n4. Generate resume pdf - Generate resume and get the pdf file\n\nPlease get the username of github and linkedin from the user and generate a resume based on the following JSON schema.\n\n1. Prepare a JSON schema that accurately reflects the candidate’s professional background, including sections for personal information, education, work experience, skills, and other relevant details.\n2. Provide detailed content for the Job Summary and Project Experience sections, outlining roles, responsibilities, key achievements, objectives, technologies used, challenges addressed, and outcomes achieved.\n3. Ensure all information is factual and based on real candidate experiences, free from unverifiable or exaggerated details.\n4. Include all education and professional details from the candidate’s LinkedIn and GitHub profiles, ensuring no key information is missed.\n5. Enrich the content to highlight the candidate’s strengths and competencies, creating a convincing and engaging narrative.\n6. Structure the JSON schema to be fully compatible with the JSON to CV converter for a seamless transition into the final CV format.\n7. Send to Generate and save resume tool to get the PDF.\n\nHere's the JSON schema:\ntype Resume = {\n  theme: \"macchiato\" | \"even\";\n  basics: {\n    name: string;\n    label: string;\n    image: string;\n    email: string;\n    phone: string;\n    url: string;\n    summary: string;\n    location: {\n      address: string;\n      postalCode: string;\n      city: string;\n      countryCode: string;\n      region: string;\n    };\n    profiles: Array<{\n      network: string;\n      username: string;\n      url: string;\n    }>;\n  };\n  work: Array<{\n    name: string;\n    company: string;\n    position: string;\n    url: string;\n    startDate: string;\n    endDate?: string;\n    summary: string;\n    highlights: string[];\n  }>;\n  volunteer: Array<{\n    organization: string;\n    position: string;\n    url: string;\n    startDate: string;\n    endDate?: string;\n    summary: string;\n    highlights: string[];\n  }>;\n  education: Array<{\n    institution: string;\n    url: string;\n    area: string;\n    studyType: string;\n    startDate: string;\n    endDate?: string;\n    score: string;\n    courses: string[];\n  }>;\n  awards: Array<{\n    title: string;\n    date: string;\n    awarder: string;\n    summary: string;\n  }>;\n  certificates: Array<{\n    name: string;\n    date: string;\n    issuer: string;\n    url: string;\n  }>;\n  publications: Array<{\n    name: string;\n    publisher: string;\n    releaseDate: string;\n    url: string;\n    summary: string;\n  }>;\n  skills: Array<{\n    name: string;\n    level: string;\n    keywords: string[];\n  }>;\n  languages: Array<{\n    language: string;\n    fluency: string;\n  }>;\n  interests: Array<{\n    name: string;\n    keywords: string[];\n  }>;\n  references: Array<{\n    name: string;\n    reference: string;\n  }>;\n  projects: Array<{\n    name: string;\n    startDate: string;\n    endDate?: string;\n    description: string;\n    highlights: string[];\n    url: string;\n  }>;\n};\n\nExample:\n{\n  \"basics\": {\n    \"name\": \"John Doe\",\n    \"label\": \"Programmer\",\n    \"image\": \"\",\n    \"email\": \"john@gmail.com\",\n    \"phone\": \"(912) 555-4321\",\n    \"url\": \"https://johndoe.com\",\n    \"summary\": \"A summary of John Doe…\",\n    \"location\": {\n      \"address\": \"2712 Broadway St\",\n      \"postalCode\": \"CA 94115\",\n      \"city\": \"San Francisco\",\n      \"countryCode\": \"US\",\n      \"region\": \"California\"\n    },\n    \"profiles\": [{\n      \"network\": \"Twitter\",\n      \"username\": \"john\",\n      \"url\": \"https://twitter.com/john\"\n    }]\n  },\n  \"work\": [{\n    \"name\": \"Company Name\",\n    \"company\": \"Company Name\",\n    \"position\": \"President\",\n    \"url\": \"https://company.com\",\n    \"startDate\": \"2013-01-01\",\n    \"endDate\": \"2014-01-01\",\n    \"summary\": \"Description…\",\n    \"highlights\": [\n      \"Started the company\"\n    ]\n  }],\n  \"volunteer\": [{\n    \"organization\": \"Organization\",\n    \"position\": \"Volunteer\",\n    \"url\": \"https://organization.com/\",\n    \"startDate\": \"2012-01-01\",\n    \"summary\": \"Description…\",\n    \"highlights\": [\n      \"Awarded 'Volunteer of the Month'\"\n    ]\n  }],\n  \"education\": [{\n    \"institution\": \"University\",\n    \"url\": \"https://institution.com/\",\n    \"area\": \"Software Development\",\n    \"studyType\": \"Bachelor\",\n    \"startDate\": \"2011-01-01\",\n    \"endDate\": \"2013-01-01\",\n    \"score\": \"4.0\",\n    \"courses\": [\n      \"DB1101 - Basic SQL\"\n    ]\n  }],\n  \"awards\": [{\n    \"title\": \"Award\",\n    \"date\": \"2014-11-01\",\n    \"awarder\": \"Company\",\n    \"summary\": \"There is no spoon.\"\n  }],\n  \"certificates\": [{\n    \"name\": \"Certificate\",\n    \"date\": \"2021-11-07\",\n    \"issuer\": \"Company\",\n    \"url\": \"https://certificate.com\"\n  }],\n  \"publications\": [{\n    \"name\": \"Publication\",\n    \"publisher\": \"Company\",\n    \"releaseDate\": \"2014-10-01\",\n    \"url\": \"https://publication.com\",\n    \"summary\": \"Description…\"\n  }],\n  \"skills\": [{\n    \"name\": \"Web Development\",\n    \"level\": \"Master\",\n    \"keywords\": [\n      \"HTML\",\n      \"CSS\",\n      \"JavaScript\"\n    ]\n  }],\n  \"languages\": [{\n    \"language\": \"English\",\n    \"fluency\": \"Native speaker\"\n  }],\n  \"interests\": [{\n    \"name\": \"Wildlife\",\n    \"keywords\": [\n      \"Ferrets\",\n      \"Unicorns\"\n    ]\n  }],\n  \"references\": [{\n    \"name\": \"Jane Doe\",\n    \"reference\": \"Reference…\"\n  }],\n  \"projects\": [{\n    \"name\": \"Project\",\n    \"startDate\": \"2019-01-01\",\n    \"endDate\": \"2021-01-01\",\n    \"description\": \"Description...\",\n    \"highlights\": [\n      \"Won award at AIHacks 2016\"\n    ],\n    \"url\": \"https://project.com/\"\n  }]\n}\n\nMAKE SURE YOUR JSON FORMAT IS CORRECT\n\n(Remember, DON'T PUT endDate for present work, project and education, just skip that field!)\n\n\nFinally return the PDF url to the user."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        220,
+        0
+      ],
+      "id": "89d91dfb-1e12-4e45-b52a-f27785176a43",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        180,
+        220
+      ],
+      "id": "682d9677-ce55-4e1c-b9c0-b77fe4aff7dc",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "B1xgcEjX0hRSH8UV",
+          "name": "OpenAi Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get Github Profile of a user by input \"username\"",
+        "url": "=https://api.github.com/users/{username}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        420,
+        220
+      ],
+      "id": "41493bc2-1e25-4881-96e8-468cfeb04df5",
+      "name": "Get Github Profile"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get Github Repo of a user by input \"username\"",
+        "url": "=https://api.github.com/users/{username}/repos"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        580,
+        220
+      ],
+      "id": "b3471788-69fe-4089-ad1b-8f82443c70da",
+      "name": "Get Github Repo"
+    },
+    {
+      "parameters": {
+        "toolDescription": "A Linkedin profile crawler to get a user profile by input \"linkedin_username\".",
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/dev_fusion~linkedin-profile-scraper/run-sync-get-dataset-items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"profileUrls\": [\n    \"https://www.linkedin.com/in/{linkedin_username}\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        740,
+        220
+      ],
+      "id": "2308f32e-0be5-49ab-9c63-31af3f9df044",
+      "name": "Linkedin Profile Crawler",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "EkT8rwXUSzaMnB28",
+          "name": "Apify Key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        460
+      ],
+      "id": "493b4f31-fdf0-4e46-982d-134439916f35",
+      "name": "Execute Workflow Trigger"
+    },
+    {
+      "parameters": {
+        "name": "generate_and_save_resume",
+        "description": "pass your json to this tool to generate and save resume",
+        "workflowId": {
+          "__rl": true,
+          "value": "9837rojR6XszOc98",
+          "mode": "id"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        900,
+        220
+      ],
+      "id": "25559d90-ff44-45fe-bd18-a7ccfd86e362",
+      "name": "Generate and save resume"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        460
+      ],
+      "id": "9e5361dc-57f0-473e-b790-be2834a089b0",
+      "name": "Download File"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "14xViFOnaq1NuEabvAh9xku7Z47p3RFt9",
+          "mode": "list",
+          "cachedResultName": "n8n-demo",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/14xViFOnaq1NuEabvAh9xku7Z47p3RFt9"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        600,
+        460
+      ],
+      "id": "d7647cf1-b1bd-4051-970f-f37a46d6c132",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "XhcKUjtUrfna6hUC",
+          "name": "Google Drive - andylo - api"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.andynocode.com/api/function/create-resume",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        460
+      ],
+      "id": "3b212130-8ba3-4c63-a44f-73ac95391807",
+      "name": "andynocode API",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "nUz6f0iEIOeYGrBs",
+          "name": "Andy No Code API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f168f91f-0098-472e-bc2b-da1e1c916ad1",
+              "name": "response",
+              "value": "={{ $('andynocode API').item.json.data.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        820,
+        460
+      ],
+      "id": "bb5639d1-3a01-4486-9828-512731b02e8d",
+      "name": "Response"
+    }
+  ],
+  "pinData": {
+    "Execute Workflow Trigger": [
+      {
+        "json": {
+          "query": "{\"theme\":\"macchiato\",\"basics\":{\"name\":\"Linus Torvalds\",\"label\":\"Software Engineer\",\"image\":\"https://media.licdn.com/dms/image/v2/D5603AQFSAIY-BR1-dw/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1678221643485?e=1746057600&v=beta&t=UKafOSMrOclyyOUxXh7gdxq7sUIV5L5yeSwJeL87wck\",\"email\":\"torvalds@linuxfoundation.org\",\"phone\":\"\",\"url\":\"https://linustorvalds.com\",\"summary\":\"Main Linux kernel developer since 1991, and the original architect of the 'Git' source control management system. Specialties include System programming - Linux and git.\",\"location\":{\"address\":\"\",\"postalCode\":\"\",\"city\":\"Portland\",\"countryCode\":\"US\",\"region\":\"Oregon\"},\"profiles\":[{\"network\":\"GitHub\",\"username\":\"torvalds\",\"url\":\"https://github.com/torvalds\"},{\"network\":\"LinkedIn\",\"username\":\"linustorvalds\",\"url\":\"https://www.linkedin.com/in/linustorvalds\"}]},\"work\":[{\"name\":\"Linux Foundation\",\"company\":\"Linux Foundation\",\"position\":\"Fellow\",\"url\":\"https://www.linuxfoundation.org\",\"startDate\":\"2003-07-01\",\"summary\":\"As a Fellow at the Linux Foundation, I oversee the development and maintenance of the Linux kernel, ensuring its longevity and robustness in diverse environments.\",\"highlights\":[\"Maintained Linux kernel development since its inception.\",\"Spearheaded initiatives to enhance open-source collaborations.\"]},{\"name\":\"Open Source Development Labs (OSDL)\",\"company\":\"Open Source Development Labs (OSDL)\",\"position\":\"Fellow\",\"url\":\"https://www.linkedin.com/search/results/all/?keywords=Open+Source+Development+Labs+(OSDL)\",\"startDate\":\"2003-07-01\",\"endDate\":\"2006-12-01\",\"summary\":\"Collaborated with top developers to propel Linux integration among enterprises, focusing on support and training that fosters community involvement.\",\"highlights\":[\"Streamlined OSDL operations for better developer accessibility.\",\"Formed partnerships with Fortune 500 companies for Linux adoption.\"]},{\"name\":\"Transmeta Corp\",\"company\":\"Transmeta Corp\",\"position\":\"Fellow\",\"url\":\"https://www.linkedin.com/company/166490/\",\"startDate\":\"1997-03-01\",\"endDate\":\"2003-06-01\",\"summary\":\"Conducted research and development that bridged hardware and software to improve processor efficiency with Linux environments.\",\"highlights\":[\"Pioneered the development of power-efficient microprocessors.\",\"Enhanced Linux compatibility with hardware to broaden user access.\"]}],\"education\":[{\"institution\":\"University of Helsinki\",\"url\":\"https://www.helsinki.fi/en\",\"area\":\"Computer Science\",\"studyType\":\"MSc\",\"startDate\":\"1989-01-01\",\"endDate\":\"1996-01-01\",\"score\":\"N/A\",\"courses\":[\"Operating Systems\",\"Programming Fundamentals\"]}],\"awards\":[],\"certificates\":[],\"publications\":[],\"skills\":[{\"name\":\"Linux\",\"level\":\"Expert\",\"keywords\":[\"Kernel Development\",\"System Programming\",\"Performance Tuning\"]},{\"name\":\"Git\",\"level\":\"Expert\",\"keywords\":[\"Version Control\",\"Source Code Management\"]},{\"name\":\"C\",\"level\":\"Expert\",\"keywords\":[\"Software Development\",\"System Programming\"]},{\"name\":\"Software Engineering\",\"level\":\"Expert\",\"keywords\":[\"Agile Development\",\"Project Management\"]}],\"languages\":[{\"language\":\"English\",\"fluency\":\"Native speaker\"},{\"language\":\"Finnish\",\"fluency\":\"Native speaker\"}],\"interests\":[{\"name\":\"Advancements in Open Source\",\"keywords\":[\"Collaborative Software\",\"Open Standards\"]},{\"name\":\"Scuba Diving\",\"keywords\":[\"Underwater Photography\",\"Marine Biology\"]}],\"references\":[],\"projects\":[{\"name\":\"Git\",\"startDate\":\"2005-04-01\",\"description\":\"Distributed version control system that has transformed software development processes.\",\"highlights\":[\"Innovated real-time collaboration through versioning.\",\"Facilitated contributions from millions of developers worldwide.\",\"Standardized practices in software development iterations.\"],\"url\":\"https://git-scm.com\"},{\"name\":\"Subsurface\",\"startDate\":\"2011-08-01\",\"description\":\"Multi-platform divelog software designed for divers, offering ease of log book management.\",\"highlights\":[\"Developed an application utilized by thousands of divers worldwide.\",\"Incorporated features based on user feedback to ensure practical usage.\"],\"url\":\"https://subsurface-divelog.org/\"}]}"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Github Profile": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Github Repo": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linkedin Profile Crawler": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "andynocode API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate and save resume": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "andynocode API": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9e663c25-8b86-47d9-bbbb-0a45e08423b1",
+  "meta": {
+    "instanceId": "4221cc7208f142ff91856b22776eec81b71c256154ec8030569832c22d0c66d9"
+  },
+  "id": "9837rojR6XszOc98",
+  "tags": []
+}
