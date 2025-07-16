@@ -25,9 +25,9 @@ services:
       - key: PORT
         value: "5678"
       - key: WEBHOOK_URL
-        value: https://n8n-latest-ed1u.onrender.com/
+        value: https://eightropy.onrender.com
       - key: N8N_ENCRYPTION_KEY
-        value: "1297dcf6-e668-44ee-aff8-b406e1a99f38"
+        value: ""
       - key: N8N_BASIC_AUTH_ACTIVE
         value: "false"
 
