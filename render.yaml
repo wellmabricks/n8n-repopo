@@ -4,7 +4,7 @@
 
 services:
   - type: web
-    name: n8n-gitops-engine
+    name: 8ropy
     env: docker
     region: oregon
     plan: free # Free tier - service spins down after 15 mins of inactivity
@@ -25,9 +25,9 @@ services:
       - key: PORT
         value: "5678"
       - key: WEBHOOK_URL
-        value: https://my-n8n-render-3b3p.onrender.com/
+        value: https://n8n-latest-ed1u.onrender.com/
       - key: N8N_ENCRYPTION_KEY
-        value: "c4a7d26f4d2c61f8b27d40a9e8c2b39c73e4b7e01c215f9d3a8e55f9b19f65d3"
+        value: "1297dcf6-e668-44ee-aff8-b406e1a99f38"
       - key: N8N_BASIC_AUTH_ACTIVE
         value: "false"
 
@@ -35,13 +35,13 @@ services:
       - key: DB_TYPE
         value: postgresdb
       - key: DB_POSTGRESDB_HOST
-        value: aws-0-us-east-2.pooler.supabase.com
+        value: aws-0-eu-west-1.pooler.supabase.com
       - key: DB_POSTGRESDB_PORT
         value: "6543"
       - key: DB_POSTGRESDB_DATABASE
         value: postgres
       - key: DB_POSTGRESDB_USER
-        value: postgres.cggjoejejessncutjlgf
+        value: postgres.yakpjriyzkoutkkxcajb
       - key: DB_POSTGRESDB_PASSWORD
         sync: false # Set this manually in Render Dashboard for security
       - key: DB_POSTGRESDB_SCHEMA
@@ -53,11 +53,11 @@ services:
       - key: N8N_RUNNERS_ENABLED
         value: "true"
       - key: GENERIC_TIMEZONE
-        value: America/Los_Angeles
+        value: America/Oragon
       - key: TZ
-        value: America/Los_Angeles
+        value: America/Oragon 
       - key: N8N_LOG_LEVEL
-        value: info
+        value: error 
 
       # --- Data Pruning (keeps database lean) ---
       - key: EXECUTIONS_DATA_PRUNE
